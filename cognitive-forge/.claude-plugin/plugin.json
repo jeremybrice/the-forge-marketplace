@@ -1,0 +1,8 @@
+{
+  "name": "cognitive-forge",
+  "description": "Deep concept evaluation through multi-agent debate. Spawns specialized agents that simultaneously analyze concepts from adversarial, creative, and integrative angles, then synthesizes their perspectives into refined understanding.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Jeremy Brice"
+  }
+}

@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Claude Code local settings (user-specific, not plugin config)
+.claude/settings.local.json
+
+# Environment and secrets
+.env
+*.key
+credentials.json
+
+# Original unpacked skill (development artifact)
+cognitive-forge-unpacked/
