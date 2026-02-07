@@ -1,5 +1,5 @@
-<p align="left">
-  <img src="the-forge-logo.jpg" alt="The Forge Marketplace" width="200">
+<p align="center">
+  <img src="the-forge-logo.jpg" alt="The Forge Marketplace" width="400">
 </p>
 
 # The Forge Marketplace
