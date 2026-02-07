@@ -1,5 +1,5 @@
-<p align="center">
-  <img src="the-forge-logo.jpg" alt="The Forge" width="400">
+<p align="left">
+  <img src="the-forge-logo.jpg" alt="The Forge" width="200">
 </p>
 
 # Cognitive Forge
