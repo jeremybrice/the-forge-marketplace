@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "cognitive-forge-marketplace",
-  "description": "Multi-agent concept evaluation through structured cognitive debate and interactive exploration.",
+  "name": "the-forge-marketplace",
+  "description": "A curated collection of Claude Code plugins for reasoning, analysis, and creative exploration.",
   "version": "1.1.0",
   "owner": {
     "name": "Jeremy Brice"

@@ -1,186 +1,58 @@
 <p align="left">
-  <img src="the-forge-logo.jpg" alt="The Forge" width="200">
+  <img src="the-forge-logo.jpg" alt="The Forge Marketplace" width="200">
 </p>
 
-# Cognitive Forge
+# The Forge Marketplace
 
-**v1.1.0**
+A curated collection of Claude Code plugins for reasoning, analysis, and creative exploration.
 
-Deep concept evaluation through multi-agent debate and interactive exploration for Claude Code.
-
-The Cognitive Forge provides two modes of concept examination: **`/debate`** spawns specialized agents that simultaneously analyze your concept from adversarial, creative, and integrative angles — then synthesizes their perspectives. **`/explore`** leads you through iterative dialogue as an active co-explorer, applying cognitive techniques conversationally with selective agent recruitment.
+The Forge Marketplace is a plugin catalog for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Each plugin provides specialized slash commands that extend Claude's capabilities — from multi-agent debate to guided concept exploration.
 
 ## Installation
 
-### Via Claude Code UI
-
-1. Open the plugin browser in Claude Code
-2. Add marketplace URL: `https://github.com/jeremybrice/cognitive-forge-plugin.git`
-3. Click **Sync**, then install **cognitive-forge**
-
-### Via CLI
-
-```bash
-/plugin marketplace add jeremybrice/cognitive-forge-plugin
-/plugin install cognitive-forge@cognitive-forge-marketplace
-```
-
-### Via Project Settings
-
-Add to your project's `.claude/settings.json`:
+Add the marketplace to your project's `.claude/settings.json`:
 
 ```json
 {
   "extraKnownMarketplaces": {
-    "cognitive-forge-marketplace": {
+    "the-forge-marketplace": {
       "source": {
         "source": "github",
-        "repo": "jeremybrice/cognitive-forge-plugin"
+        "repo": "jeremybrice/the-forge-marketplace"
       }
     }
-  },
-  "enabledPlugins": {
-    "cognitive-forge@cognitive-forge-marketplace": true
   }
 }
 ```
 
-## Usage
-
-### `/cognitive-forge:debate` — Multi-Agent Debate
-
-```
-/cognitive-forge:debate <your concept here>
-```
-
-Spawns parallel agents to examine your concept from every angle. You observe the debate and receive a synthesis.
-
-**Examples:**
-```
-/cognitive-forge:debate a subscription model for AI consulting
-/cognitive-forge:debate the argument that AI systems should have legal personhood
-/cognitive-forge:debate using OKRs for personal goal-setting
-```
-
-**Quiet Mode** — skip debate narration, see only the final synthesis:
-```
-/cognitive-forge:debate "my concept" --quiet
-```
-
-### `/cognitive-forge:explore` — Interactive Exploration
-
-```
-/cognitive-forge:explore <your concept here>
-```
-
-Engages you in iterative dialogue, applying cognitive techniques conversationally. You're an active participant shaping the exploration.
-
-**Examples:**
-```
-/cognitive-forge:explore the ethics of AI-generated training data
-/cognitive-forge:explore whether microservices are right for our architecture
-/cognitive-forge:explore a documentary series told entirely through AI-generated imagery
-```
-
-### When to Use Which
-
-| | `/debate` | `/explore` |
-|---|-----------|------------|
-| **Mode** | Breadth — parallel perspectives | Depth — iterative collaboration |
-| **Your role** | Observer (review + approve intake) | Active co-explorer |
-| **Agents** | 3 core + up to 2 recruited | Guide + up to 2 recruited on demand |
-| **Best for** | Getting multiple independent viewpoints fast | Deep-diving into a concept with guided dialogue |
-| **Pace** | Single pass with optional cross-examination | Multi-turn conversation at your pace |
-
-## How `/debate` Works
-
-When you invoke `/cognitive-forge:debate`, the system:
-
-1. **Intake**: Classifies your concept (Business, Philosophical, Framework, or Creative) and confirms understanding
-2. **Recruit**: Spawns 3 core agents in parallel, plus optional specialists based on complexity
-3. **Analyze**: Each agent examines the concept through its unique lens simultaneously
-4. **Present**: Shows each perspective with narration of agreements and tensions (visible mode)
-5. **Cross-examine**: If agents sharply disagree, feeds critiques across for response (optional)
-6. **Synthesize**: Integrates all perspectives into refined understanding with actionable next steps
-
-## How `/explore` Works
-
-When you invoke `/cognitive-forge:explore`, the Guide:
-
-1. **Intake**: Conversational exchange to understand the concept, your relationship to it, and what success looks like
-2. **Decompose**: Breaks the concept into components, shares the map, invites your correction
-3. **Examine**: Applies 2-3 cognitive techniques based on concept type, pausing after each for your response
-4. **Stress-test**: Adversarial testing — pre-mortem, inversion, stress scenarios — framed collaboratively
-5. **Expand**: Adjacent possibilities, constraint removal, hybrid forms (optional — skipped if not needed)
-6. **Synthesize**: Draws threads together in a format shaped by the concept type and dialogue trajectory
-
-The Guide recruits specialist agents (Decomposer, Evaluator) mid-dialogue only when complexity genuinely demands it, always explaining why before spawning.
-
-## The Agents
-
-| Agent | Role | Techniques | Used By |
-|-------|------|------------|---------|
-| **Challenger** | Adversarial analysis | Steel Opposition, Boundary Mapping, Pre-Mortem, Inversion | `/debate` only |
-| **Explorer** | Creative expansion | Possibility Expansion, Constraint Shaping, Perspective Synthesis | `/debate` only |
-| **Synthesizer** | Integration | Iterative Refinement, Quality Calibration, Tension Mapping | `/debate` only |
-| **Decomposer** | Structural analysis (recruited) | Cognitive Decomposition, Sequential Deepening | Both commands |
-| **Evaluator** | Evidence grounding (recruited) | Evidence Anchoring, Excellence Calibration | Both commands |
-
-The Decomposer is recruited for structurally complex concepts (4+ interacting components). The Evaluator is recruited for concepts with checkable factual claims (and has web search access).
-
-### Concept Types
-
-Both commands adapt technique emphasis based on concept type:
-
-- **Business**: Stakeholder perspectives, failure modes, evidence anchoring
-- **Philosophical**: Logic, steel opposition, boundary mapping, tensions
-- **Framework**: Structural integrity, edge cases, comparative analysis
-- **Creative**: Possibility expansion, excellence calibration, constraint shaping
-
-## Architecture
-
-```
-cognitive-forge-plugin/
-├── .claude-plugin/
-│   └── marketplace.json          # Marketplace catalog
-├── cognitive-forge/
-│   ├── .claude-plugin/
-│   │   └── plugin.json           # Plugin manifest
-│   ├── CLAUDE.md                 # Ambient plugin context
-│   ├── commands/
-│   │   ├── debate.md             # /debate command (Moderator protocol)
-│   │   └── explore.md            # /explore command (Guide protocol)
-│   ├── skills/
-│   │   └── cognitive-techniques/
-│   │       ├── SKILL.md          # Foundation knowledge for agents
-│   │       └── references/
-│   │           └── techniques.md # 10 cognitive techniques
-│   ├── agents/
-│   │   ├── forge-challenger.md   # Adversarial analysis
-│   │   ├── forge-explorer.md     # Creative expansion
-│   │   ├── forge-synthesizer.md  # Integration
-│   │   ├── forge-decomposer.md   # Structural analysis (recruited)
-│   │   └── forge-evaluator.md    # Evidence grounding (recruited)
-│   └── hooks/
-│       └── hooks.json            # Empty for v2
-├── .gitignore
-└── README.md
-```
-
-## Local Development
-
-Test the plugin locally without installing from GitHub:
+Then install any plugin from the catalog:
 
 ```bash
-claude --plugin-dir ./cognitive-forge
+/plugin install <plugin-name>@the-forge-marketplace
 ```
 
-Validate the plugin structure:
+Or add it directly to your settings:
 
-```bash
-claude plugin validate .
+```json
+{
+  "enabledPlugins": {
+    "<plugin-name>@the-forge-marketplace": true
+  }
+}
 ```
 
-## Credits
+## Available Plugins
 
-Built on the Cognitive Forge concept evaluation framework — 10 cognitive techniques for deep concept examination, adapted from a single-agent skill into a multi-agent debate system and interactive exploration guide.
+| Plugin | Description | Version | Category |
+|--------|-------------|---------|----------|
+| [**Cognitive Forge**](./cognitive-forge/) | Multi-agent concept evaluation through structured debate (`/debate`) and interactive guided exploration (`/explore`) | 1.1.0 | Reasoning |
+
+More plugins coming soon.
+
+## Contributing
+
+Interested in adding a plugin to The Forge Marketplace? Each plugin lives in its own directory with a `.claude-plugin/plugin.json` manifest, commands, and optional agents/skills. Open a PR with your plugin directory and an entry in `.claude-plugin/marketplace.json`.
+
+## License
+
+See individual plugin directories for licensing details.
