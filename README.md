@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="the-forge-logo.jpg" alt="The Forge" width="400">
+</p>
+
 # Cognitive Forge
 
 Deep concept evaluation through multi-agent debate for Claude Code.
