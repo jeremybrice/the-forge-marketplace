@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Productivity</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='2' width='24' height='28' rx='4' fill='%23ffffff' stroke='%234a6cf7' stroke-width='2'/%3E%3Crect x='8' y='0' width='16' height='5' rx='2.5' fill='%234a6cf7'/%3E%3Cpath d='M9 13l3 3 5-5' fill='none' stroke='%234a6cf7' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='20' y='12' width='5' height='2' rx='1' fill='%23c4c4c2'/%3E%3Crect x='9' y='20' width='10' height='2' rx='1' fill='%23c4c4c2'/%3E%3Crect x='9' y='25' width='7' height='2' rx='1' fill='%23c4c4c2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -62,7 +63,7 @@
       background: var(--bg-primary);
       color: var(--text-primary);
       height: 100vh;
-      padding: 20px 24px;
+      padding: 0;
       line-height: 1.5;
       transition: background var(--transition), color var(--transition);
       overflow: hidden;
@@ -70,29 +71,24 @@
       flex-direction: column;
     }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 16px;
+    #toolbar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 16px; height: 48px;
+      background: var(--bg-secondary);
       border-bottom: 1px solid var(--border-color);
-      flex-shrink: 0;
+      z-index: 10; flex-shrink: 0;
     }
-
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
+    #toolbar .folder-path {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: var(--radius-sm);
+      background: var(--bg-tertiary); color: var(--text-secondary);
+      font-size: 13px; max-width: 300px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
     }
+    #toolbar .spacer { flex: 1; }
+    #toolbar .refresh-indicator { font-size: 12px; color: var(--text-muted); }
 
     h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; color: var(--text-secondary); }
-
-    .header-left {
-      display: flex;
-      align-items: flex-start;
-      gap: 0;
-    }
 
     .view-toggle {
       display: flex;
@@ -123,17 +119,15 @@
       box-shadow: 0 1px 3px var(--shadow-sm);
     }
 
-    .buttons { display: flex; gap: 12px; align-items: center; }
-
     .btn-icon {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: var(--radius-sm);
       padding: 0;
-      font-size: 18px;
+      font-size: 16px;
       line-height: 1;
     }
 
@@ -1164,6 +1158,7 @@
 
     .tab-panel.active {
       display: flex;
+      padding: 20px 24px;
     }
 
     /* Memory panel scrollable area */
@@ -1174,45 +1169,30 @@
     }
 
 
-    /* File path display */
-    .file-path {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-left">
-      <svg width="28" height="28" viewBox="0 0 32 32" style="margin-right: 12px; flex-shrink: 0;">
-        <rect x="4" y="2" width="24" height="28" rx="4" fill="var(--bg-primary)" stroke="var(--accent)" stroke-width="2"/>
-        <rect x="8" y="0" width="16" height="5" rx="2.5" fill="var(--accent)"/>
-        <path d="M9 13l3 3 5-5" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <rect x="20" y="12" width="5" height="2" rx="1" fill="var(--text-muted)"/>
-        <rect x="9" y="20" width="10" height="2" rx="1" fill="var(--text-muted)"/>
-        <rect x="9" y="25" width="7" height="2" rx="1" fill="var(--text-muted)"/>
-      </svg>
-      <div>
-        <h1>Productivity</h1>
-        <div id="filePath" class="file-path"></div>
-      </div>
-      <div class="view-toggle" id="mainTabToggle">
-        <button id="tasksTabBtn" class="active">Tasks</button>
-        <button id="memoryTabBtn">Memory</button>
-      </div>
-      <div class="view-toggle" id="taskViewToggle">
-        <button id="boardViewBtn" class="active">Board</button>
-        <button id="listViewBtn">List</button>
-      </div>
+  <div id="toolbar">
+    <span style="font-weight:700;font-size:15px;"><i class="fa-solid fa-brain"></i> Productivity</span>
+    <div class="folder-path hidden" id="folder-path">
+      <span><i class="fa-solid fa-folder-open"></i></span><span id="folder-name"></span>
     </div>
-    <div class="buttons">
-      <button id="openTaskBtn">Select File</button>
-      <button id="openMemoryBtn" style="display: none;">Open Folder</button>
-      <button id="saveBtn" class="primary" disabled style="display: none;">Save</button>
-      <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme">&#9789;</button>
+    <div class="view-toggle" id="mainTabToggle">
+      <button id="tasksTabBtn" class="active">Tasks</button>
+      <button id="memoryTabBtn">Memory</button>
     </div>
-  </header>
+    <div class="view-toggle" id="taskViewToggle">
+      <button id="boardViewBtn" class="active">Board</button>
+      <button id="listViewBtn">List</button>
+    </div>
+    <div class="spacer"></div>
+    <span class="refresh-indicator" id="refresh-indicator"></span>
+    <button class="btn-icon" id="btn-refresh" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+    <button class="btn-icon" id="saveBtn" title="Save" disabled><i class="fa-solid fa-floppy-disk"></i></button>
+    <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+    <button class="btn-icon" id="openTaskBtn" title="Select file"><i class="fa-solid fa-file-lines"></i></button>
+    <button class="btn-icon" id="openMemoryBtn" style="display:none;" title="Open folder"><i class="fa-solid fa-folder-open"></i></button>
+  </div>
 
   <!-- TASKS TAB PANEL -->
   <div class="tab-panel active" id="tasksPanel">
@@ -1272,7 +1252,7 @@
     }
     function updateThemeIcon() {
       const theme = document.documentElement.getAttribute('data-theme') || 'light';
-      document.getElementById('theme-toggle').innerHTML = theme === 'light' ? '&#9789;' : '&#9788;';
+      document.getElementById('theme-toggle').innerHTML = theme === 'light' ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
     }
     initTheme();
 
@@ -1280,7 +1260,8 @@
     let activeMainTab = 'tasks'; // 'tasks' or 'memory'
 
     const statusEl = document.getElementById('status');
-    const filePathEl = document.getElementById('filePath');
+    const folderPathEl = document.getElementById('folder-path');
+    const folderNameEl = document.getElementById('folder-name');
 
     function showStatus(msg) {
       statusEl.textContent = msg;
@@ -1355,16 +1336,32 @@
       openMemoryBtn.style.display = tab === 'memory' ? 'inline-flex' : 'none';
       saveBtn.style.display = tab === 'tasks' ? 'inline-flex' : 'none';
 
-      // Update file path display
-      if (tab === 'tasks') {
-        filePathEl.textContent = taskFileHandle ? taskFileName : '';
+      // Update folder badge display
+      if (tab === 'tasks' && taskFileHandle) {
+        folderNameEl.textContent = taskFileName;
+        folderPathEl.classList.remove('hidden');
+      } else if (tab === 'memory' && memoryDirHandle) {
+        folderNameEl.textContent = memoryDirHandle.name;
+        folderPathEl.classList.remove('hidden');
       } else {
-        filePathEl.textContent = memoryDirHandle ? memoryDirHandle.name : '';
+        folderPathEl.classList.add('hidden');
       }
     }
 
     tasksTabBtn.addEventListener('click', () => switchMainTab('tasks'));
     memoryTabBtn.addEventListener('click', () => switchMainTab('memory'));
+
+    // Refresh button handler
+    document.getElementById('btn-refresh').addEventListener('click', async () => {
+      if (activeMainTab === 'tasks') {
+        await checkForExternalChanges();
+      } else {
+        await checkForMemoryChanges();
+      }
+      const now = new Date();
+      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('refresh-indicator').textContent = 'Refreshed \u00B7 ' + time;
+    });
 
     // ============================================================
     // ===== TASKS FUNCTIONALITY =====
@@ -2636,7 +2633,8 @@
         switchTaskView('board');
         startWatching();
         taskFileName = file.name;
-        filePathEl.textContent = file.name;
+        folderNameEl.textContent = file.name;
+        folderPathEl.classList.remove('hidden');
         showStatus('Loaded ' + file.name);
       } catch (e) {
         if (e.name !== 'AbortError') { showStatus('Error: ' + e.message); }
@@ -2802,7 +2800,8 @@
       renderMemory();
       memoryEmptyState.style.display = 'none';
       memoryMainContent.style.display = 'flex';
-      filePathEl.textContent = memoryDirHandle.name;
+      folderNameEl.textContent = memoryDirHandle.name;
+      folderPathEl.classList.remove('hidden');
 
       memoryLastModifiedMap = await buildMemoryTimestampMap();
       startMemoryWatching();
@@ -3393,7 +3392,8 @@
             sections = result.sections;
             tasks = result.tasks;
             taskFileName = file.name;
-            filePathEl.textContent = file.name;
+            folderNameEl.textContent = file.name;
+            folderPathEl.classList.remove('hidden');
             renderTasks();
             startWatching();
           } else {

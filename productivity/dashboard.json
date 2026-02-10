@@ -1,5 +1,5 @@
 {
   "path": "skills/dashboard.html",
   "label": "Productivity",
-  "icon": "📋"
+  "icon": "<i class=\"fa-solid fa-brain\"></i>"
 }

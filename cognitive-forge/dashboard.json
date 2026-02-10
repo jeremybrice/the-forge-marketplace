@@ -1,5 +1,5 @@
 {
   "path": "dashboard.html",
   "label": "Cognitive Forge",
-  "icon": "🧠"
+  "icon": "<i class=\"fa-solid fa-scale-balanced\"></i>"
 }

@@ -1,5 +1,5 @@
 {
   "path": "viewer.html",
   "label": "Product Forge",
-  "icon": "🔨"
+  "icon": "<i class=\"fa-solid fa-clipboard-list\"></i>"
 }
