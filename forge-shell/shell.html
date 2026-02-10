@@ -229,6 +229,76 @@
       font-family: 'SF Mono', 'Fira Code', monospace;
     }
 
+    /* ── Welcome Screen ── */
+    #welcome-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary);
+    }
+
+    #welcome-screen.hidden {
+      display: none;
+    }
+
+    .welcome-content {
+      text-align: center;
+      max-width: 480px;
+      padding: 40px;
+    }
+
+    .welcome-content .logo {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+
+    .welcome-content h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .welcome-content p {
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .welcome-content .btn-select {
+      padding: 12px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .welcome-content .btn-select:hover {
+      background: var(--accent-hover);
+    }
+
+    .welcome-content .note {
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ── Main app wrapper ── */
+    #app-shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    #app-shell.hidden {
+      display: none;
+    }
+
     /* ── Sidebar collapse on narrow screens ── */
     .sidebar-toggle {
       display: none;
@@ -258,54 +328,131 @@
 </head>
 <body>
 
-  <!-- Header -->
-  <header class="header">
-    <div class="header-title">
-      <button class="btn-icon sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
-      <span class="logo">&#9881;</span>
-      <span>Forge Shell</span>
+  <!-- Welcome Screen -->
+  <div id="welcome-screen" class="hidden">
+    <div class="welcome-content">
+      <div class="logo">&#9881;</div>
+      <h1>Forge Shell</h1>
+      <p>Unified dashboard for all your Forge plugins. Select your work folder to load the plugin registry.</p>
+      <button class="btn-select" onclick="selectWorkFolder()">Select Work Folder</button>
+      <p class="note">Choose the project directory where <code>shell-registry.json</code> was created by <code>/shell:add</code>.</p>
     </div>
-    <div class="header-actions">
-      <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme">&#9789;</button>
+  </div>
+
+  <!-- Main App Shell -->
+  <div id="app-shell" class="hidden">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-title">
+        <button class="btn-icon sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
+        <span class="logo">&#9881;</span>
+        <span>Forge Shell</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon" onclick="selectWorkFolder()" title="Change work folder">&#128193;</button>
+        <button class="btn-icon" onclick="reloadRegistry()" title="Reload registry">&#8635;</button>
+        <button class="btn-icon" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme">&#9789;</button>
+      </div>
+    </header>
+
+    <!-- Layout -->
+    <div class="layout">
+      <!-- Sidebar -->
+      <nav class="sidebar" id="sidebar">
+        <div class="sidebar-section-label">Plugins</div>
+        <ul class="nav-list" id="nav-list">
+          <!-- Populated by JS -->
+        </ul>
+      </nav>
+
+      <!-- Content -->
+      <main class="content" id="content">
+        <!-- iframe or empty state inserted by JS -->
+      </main>
     </div>
-  </header>
-
-  <!-- Layout -->
-  <div class="layout">
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-      <div class="sidebar-section-label">Plugins</div>
-      <ul class="nav-list" id="nav-list">
-        <!-- Populated by JS -->
-      </ul>
-    </nav>
-
-    <!-- Content -->
-    <main class="content" id="content">
-      <!-- iframe or empty state inserted by JS -->
-    </main>
   </div>
 
   <script>
     /* ═══════════════════════════════════════════════════════════════
-       REGISTRY — Replaced inline by /shell:open via shell-gen skill
-       ═══════════════════════════════════════════════════════════════ */
-    const REGISTRY = { "plugins": [] };
-
-    /* ═══════════════════════════════════════════════════════════════
        STATE
        ═══════════════════════════════════════════════════════════════ */
+    let REGISTRY = { plugins: [] };
     let activePlugin = null;
     let iframe = null;
+    let workDirHandle = null;
 
     /* ═══════════════════════════════════════════════════════════════
-       INIT
+       INDEXEDDB PERSISTENCE
        ═══════════════════════════════════════════════════════════════ */
-    function init() {
-      applyTheme();
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('ForgeShell', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('handles');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function saveHandle(key, handle) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('handles', 'readwrite');
+        tx.objectStore('handles').put(handle, key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function getHandle(key) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('handles', 'readonly');
+        const req = tx.objectStore('handles').get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function clearHandle(key) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('handles', 'readwrite');
+        tx.objectStore('handles').delete(key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       WORK FOLDER SELECTION
+       ═══════════════════════════════════════════════════════════════ */
+    async function selectWorkFolder() {
+      try {
+        workDirHandle = await window.showDirectoryPicker({ mode: 'read' });
+        await saveHandle('workDir', workDirHandle);
+        await loadRegistry(workDirHandle);
+        showApp();
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.error('Error selecting folder:', e);
+        }
+      }
+    }
+
+    async function loadRegistry(dirHandle) {
+      try {
+        const fileHandle = await dirHandle.getFileHandle('shell-registry.json');
+        const file = await fileHandle.getFile();
+        const text = await file.text();
+        REGISTRY = JSON.parse(text);
+      } catch (e) {
+        // File not found or invalid — treat as empty registry
+        REGISTRY = { plugins: [] };
+      }
+
       renderNav();
 
-      // Restore from hash
+      // Restore from hash or select first
       const hash = location.hash.replace('#', '');
       const match = REGISTRY.plugins.find(p => p.name === hash);
       if (match) {
@@ -315,14 +462,63 @@
       } else {
         showEmptyState();
       }
+    }
 
-      // Listen for hash changes
-      window.addEventListener('hashchange', () => {
-        const name = location.hash.replace('#', '');
-        if (name && name !== activePlugin) {
-          selectPlugin(name);
+    async function reloadRegistry() {
+      if (workDirHandle) {
+        // Re-verify permission
+        const perm = await workDirHandle.queryPermission({ mode: 'read' });
+        if (perm === 'granted') {
+          await loadRegistry(workDirHandle);
+        } else {
+          const requested = await workDirHandle.requestPermission({ mode: 'read' });
+          if (requested === 'granted') {
+            await loadRegistry(workDirHandle);
+          }
         }
-      });
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       HANDLE RESTORATION
+       ═══════════════════════════════════════════════════════════════ */
+    async function restoreHandle() {
+      try {
+        const saved = await getHandle('workDir');
+        if (saved) {
+          let perm = await saved.queryPermission({ mode: 'read' });
+          if (perm === 'prompt') {
+            perm = await saved.requestPermission({ mode: 'read' });
+          }
+          if (perm === 'granted') {
+            workDirHandle = saved;
+            await loadRegistry(workDirHandle);
+            showApp();
+            return;
+          } else {
+            await clearHandle('workDir');
+          }
+        }
+      } catch (e) {
+        console.log('Could not restore work folder handle:', e);
+        await clearHandle('workDir').catch(() => {});
+      }
+
+      // No saved handle or permission denied — show welcome screen
+      showWelcome();
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       VIEW MANAGEMENT
+       ═══════════════════════════════════════════════════════════════ */
+    function showWelcome() {
+      document.getElementById('welcome-screen').classList.remove('hidden');
+      document.getElementById('app-shell').classList.add('hidden');
+    }
+
+    function showApp() {
+      document.getElementById('welcome-screen').classList.add('hidden');
+      document.getElementById('app-shell').classList.remove('hidden');
     }
 
     /* ═══════════════════════════════════════════════════════════════
@@ -386,11 +582,11 @@
       content.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">&#9881;</div>
-          <h2>Welcome to Forge Shell</h2>
-          <p>No plugins are registered yet. Add your first plugin:</p>
+          <h2>No Plugins Registered</h2>
+          <p>Add plugins to Forge Shell using the CLI:</p>
           <p><code>/shell:add productivity</code></p>
           <p><code>/shell:add product-forge-local</code></p>
-          <p style="margin-top: 12px;">Then run <code>/shell:open</code> to refresh.</p>
+          <p style="margin-top: 12px;">Then click &#8635; to reload the registry.</p>
         </div>
       `;
     }
@@ -415,12 +611,12 @@
 
     function updateThemeIcon() {
       const theme = document.documentElement.getAttribute('data-theme') || 'light';
-      document.getElementById('theme-toggle').innerHTML = theme === 'light' ? '&#9789;' : '&#9788;';
+      const btn = document.getElementById('theme-toggle');
+      if (btn) btn.innerHTML = theme === 'light' ? '&#9789;' : '&#9788;';
     }
 
     function broadcastTheme() {
       const theme = document.documentElement.getAttribute('data-theme') || 'light';
-      // Broadcast to all iframes
       document.querySelectorAll('iframe').forEach(frame => {
         try {
           frame.contentWindow.postMessage({ type: 'forge-shell:theme', theme: theme }, '*');
@@ -438,9 +634,20 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════
+       HASH CHANGE
+       ═══════════════════════════════════════════════════════════════ */
+    window.addEventListener('hashchange', () => {
+      const name = location.hash.replace('#', '');
+      if (name && name !== activePlugin) {
+        selectPlugin(name);
+      }
+    });
+
+    /* ═══════════════════════════════════════════════════════════════
        BOOT
        ═══════════════════════════════════════════════════════════════ */
-    init();
+    applyTheme();
+    restoreHandle();
   </script>
 </body>
 </html>
