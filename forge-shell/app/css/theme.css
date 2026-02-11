@@ -44,6 +44,14 @@
   --type-decision: #ef4444;
   --type-release-note: #ec4899;
 
+  /* Roadmap bucket colors */
+  --rm-bucket-1: #8b5cf6;
+  --rm-bucket-2: #3b82f6;
+  --rm-bucket-3: #10b981;
+  --rm-bucket-4: #f59e0b;
+  --rm-bucket-5: #ec4899;
+  --rm-bucket-6: #ef4444;
+
   /* Product Forge status colors */
   --status-draft: #e67e22;
   --status-blue: #3498db;

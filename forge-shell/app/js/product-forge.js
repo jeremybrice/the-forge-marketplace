@@ -9,216 +9,25 @@
   const ESC = ForgeUtils.escapeHTML;
   const VIEW_ID = 'view-product-forge-local';
 
-  /* ─── Field Orders (for YAML serialization) ─── */
-  const FIELD_ORDER = {
-    initiative: ['title','type','status','product','module','client','team','confidence','estimate_hours','jira_card','source_intake','children','description','source_conversation','created','updated'],
-    epic: ['title','type','status','product','module','client','team','parent','children','description','source_intake','source_conversation','created','updated'],
-    story: ['title','type','status','product','module','client','team','parent','story_points','jira_card','source_conversation','created','updated'],
-    intake: ['title','type','status','product','module','client','generated_initiatives','generated_epics','source_conversation','created','updated'],
-    checkpoint: ['title','type','checkpoint_date','product','module','client','domain','status','source_conversation','created','updated'],
-    decision: ['title','type','decision_date','product','module','client','decision_type','status','stakeholders','source_conversation','created','updated'],
-    'release-note': ['title','type','release_date','product','status','version','related_stories','source_conversation','created','updated']
-  };
-
-  const STATUS_OPTIONS = {
-    initiative: ['Draft','Submitted','Approved','Superseded'],
-    epic: ['Planning','In Progress','Complete','Cancelled'],
-    story: ['Draft','Ready','In Progress','Done'],
-    intake: ['Draft','Complete','Handed Off'],
-    checkpoint: ['Current','Superseded','Archived'],
-    decision: ['Active','Revised','Reversed'],
-    'release-note': ['Draft','Published','Internal Only']
-  };
-
-  const CONFIDENCE_OPTIONS = ['High','Medium','Low'];
-  const DOMAIN_OPTIONS = ['Integration','Operations','Configuration','Reporting','Mobile','Feature Scope','Architecture','Requirements','Technical Spec','Stakeholder Context'];
-  const DECISION_TYPE_OPTIONS = ['Architecture','Scope','Priority','Technical','Stakeholder Commitment'];
-
-  const EXPECTED_DIRS = ['initiatives','epics','stories','intakes','checkpoints','decisions','release-notes'];
-  const DIR_TYPE_MAP = {
-    'initiatives': 'initiative', 'epics': 'epic', 'stories': 'story',
-    'intakes': 'intake', 'checkpoints': 'checkpoint',
-    'decisions': 'decision', 'release-notes': 'release-note'
-  };
-
-  /* ─── Helpers ─── */
-  function getStatusColor(status) {
-    if (!status) return 'var(--text-muted)';
-    const map = {
-      'draft': 'var(--status-draft)', 'submitted': 'var(--status-blue)',
-      'approved': 'var(--status-green)', 'planning': 'var(--status-blue)',
-      'in progress': 'var(--status-blue)', 'ready': 'var(--status-teal)',
-      'complete': 'var(--status-green)', 'done': 'var(--status-green)',
-      'current': 'var(--status-green)', 'active': 'var(--status-green)',
-      'cancelled': 'var(--status-gray)', 'superseded': 'var(--status-gray)',
-      'archived': 'var(--status-gray)', 'reversed': 'var(--status-gray)',
-      'revised': 'var(--status-gray)', 'published': 'var(--status-green)',
-      'internal only': 'var(--status-yellow)', 'handed off': 'var(--status-green)',
-    };
-    return map[status.toLowerCase()] || 'var(--text-muted)';
-  }
-
-  function getTypeColor(type) {
-    const map = {
-      'initiative': 'var(--type-initiative)', 'epic': 'var(--type-epic)',
-      'story': 'var(--type-story)', 'intake': 'var(--type-intake)',
-      'checkpoint': 'var(--type-checkpoint)', 'decision': 'var(--type-decision)',
-      'release-note': 'var(--type-release-note)'
-    };
-    return map[type] || 'var(--text-muted)';
-  }
+  /* ─── Aliases from shared CardData layer ─── */
+  const FIELD_ORDER = CardData.FIELD_ORDER;
+  const STATUS_OPTIONS = CardData.STATUS_OPTIONS;
+  const CONFIDENCE_OPTIONS = CardData.CONFIDENCE_OPTIONS;
+  const DOMAIN_OPTIONS = CardData.DOMAIN_OPTIONS;
+  const DECISION_TYPE_OPTIONS = CardData.DECISION_TYPE_OPTIONS;
+  const EXPECTED_DIRS = CardData.EXPECTED_DIRS;
+  const DIR_TYPE_MAP = CardData.DIR_TYPE_MAP;
+  const CardStore = CardData.CardStore;
+  const CardParser = CardData.CardParser;
+  const getStatusColor = CardData.getStatusColor;
+  const getTypeColor = CardData.getTypeColor;
+  const buildHierarchy = CardData.buildHierarchy;
+  const scanCardsDir = CardData.scanCardsDir;
+  const discoverTaxonomy = CardData.discoverTaxonomy;
 
   function $view() { return document.getElementById(VIEW_ID); }
   function $q(sel) { const v = $view(); return v ? v.querySelector(sel) : null; }
   function $qa(sel) { const v = $view(); return v ? v.querySelectorAll(sel) : []; }
-
-  /* ═══════════════════════════════════════════════════════════════
-     CardStore
-     ═══════════════════════════════════════════════════════════════ */
-  class CardStore {
-    constructor() {
-      this.cards = new Map();
-      this.timestamps = new Map();
-      this.fileHandles = new Map();
-    }
-    clear() { this.cards.clear(); this.timestamps.clear(); this.fileHandles.clear(); }
-    set(filename, card, timestamp, handle) {
-      this.cards.set(filename, card);
-      this.timestamps.set(filename, timestamp);
-      if (handle) this.fileHandles.set(filename, handle);
-    }
-    get(filename) { return this.cards.get(filename) || null; }
-    delete(filename) { this.cards.delete(filename); this.timestamps.delete(filename); this.fileHandles.delete(filename); }
-    getByType(type) { return [...this.cards.values()].filter(c => c.frontmatter.type === type); }
-    getChildren(parentFilename) { return [...this.cards.values()].filter(c => c.frontmatter.parent === parentFilename); }
-    all() { return [...this.cards.values()]; }
-  }
-
-  /* ═══════════════════════════════════════════════════════════════
-     CardParser
-     ═══════════════════════════════════════════════════════════════ */
-  const CardParser = {
-    parse(filename, content, dirName) {
-      const card = { filename, dirName, raw: content, error: null, frontmatter: {}, body: '' };
-      const parsed = ForgeUtils.parseFrontmatter(content);
-      if (!parsed) {
-        card.error = 'No valid frontmatter found';
-        card.body = content;
-        return card;
-      }
-      card.frontmatter = parsed.frontmatter;
-      card.body = parsed.body;
-      if (!card.frontmatter.type) {
-        card.frontmatter.type = DIR_TYPE_MAP[dirName] || 'unknown';
-      }
-      return card;
-    },
-
-    serialize(frontmatter, body) {
-      const type = frontmatter.type || 'unknown';
-      const order = FIELD_ORDER[type] || null;
-      const yaml = ForgeUtils.YAML.stringify(frontmatter, order);
-      return '---\n' + yaml + '\n---\n\n' + body + '\n';
-    }
-  };
-
-  /* ═══════════════════════════════════════════════════════════════
-     Hierarchy Builder
-     ═══════════════════════════════════════════════════════════════ */
-  function buildHierarchy(store) {
-    const initiatives = store.getByType('initiative');
-    const epics = store.getByType('epic');
-    const stories = store.getByType('story');
-    const placedEpics = new Set();
-    const placedStories = new Set();
-
-    const tree = initiatives.map(init => {
-      const childEpics = epics.filter(e =>
-        e.frontmatter.parent === init.filename ||
-        (Array.isArray(init.frontmatter.children) && init.frontmatter.children.includes(e.filename))
-      );
-      childEpics.forEach(e => placedEpics.add(e.filename));
-
-      const epicNodes = childEpics.map(epic => {
-        const childStories = stories.filter(s =>
-          s.frontmatter.parent === epic.filename ||
-          (Array.isArray(epic.frontmatter.children) && epic.frontmatter.children.includes(s.filename))
-        );
-        childStories.forEach(s => placedStories.add(s.filename));
-        return { card: epic, children: childStories };
-      });
-      return { card: init, children: epicNodes };
-    });
-
-    const rawOrphanEpics = epics.filter(e => !placedEpics.has(e.filename));
-    const orphanEpicNodes = rawOrphanEpics.map(epic => {
-      const childStories = stories.filter(s =>
-        s.frontmatter.parent === epic.filename ||
-        (Array.isArray(epic.frontmatter.children) && epic.frontmatter.children.includes(s.filename))
-      );
-      childStories.forEach(s => placedStories.add(s.filename));
-      return { card: epic, children: childStories };
-    });
-    const orphanStories = stories.filter(s => !placedStories.has(s.filename));
-
-    return {
-      tree,
-      orphanEpics: orphanEpicNodes,
-      orphanStories,
-      intakes: store.getByType('intake'),
-      checkpoints: store.getByType('checkpoint'),
-      decisions: store.getByType('decision'),
-      releaseNotes: store.getByType('release-note')
-    };
-  }
-
-  /* ═══════════════════════════════════════════════════════════════
-     File Scanner — scans cards/ subdirs
-     ═══════════════════════════════════════════════════════════════ */
-  async function scanCardsDir(cardsHandle) {
-    const files = new Map();
-    if (!cardsHandle) return files;
-    try {
-      for await (const entry of cardsHandle.values()) {
-        if (entry.kind !== 'directory') continue;
-        if (!EXPECTED_DIRS.includes(entry.name)) continue;
-        try {
-          for await (const fileEntry of entry.values()) {
-            if (fileEntry.kind !== 'file' || !fileEntry.name.endsWith('.md')) continue;
-            const filename = fileEntry.name.replace(/\.md$/, '');
-            try {
-              const file = await fileEntry.getFile();
-              files.set(filename, {
-                handle: fileEntry,
-                dirName: entry.name,
-                fileName: fileEntry.name,
-                lastModified: file.lastModified,
-                content: await file.text()
-              });
-            } catch (e) { console.warn('Failed to read ' + fileEntry.name + ':', e); }
-          }
-        } catch (e) { console.warn('Failed to scan ' + entry.name + ':', e); }
-      }
-    } catch (e) { console.error('Failed to scan cards directory:', e); }
-    return files;
-  }
-
-  /* ═══════════════════════════════════════════════════════════════
-     Taxonomy Discovery
-     ═══════════════════════════════════════════════════════════════ */
-  function discoverTaxonomy(cards) {
-    const products = new Set();
-    const modules = new Set();
-    const clients = new Set();
-    cards.forEach(c => {
-      if (c.frontmatter) {
-        if (c.frontmatter.product) products.add(c.frontmatter.product);
-        if (c.frontmatter.module) modules.add(c.frontmatter.module);
-        if (c.frontmatter.client) clients.add(c.frontmatter.client);
-      }
-    });
-    return { products: [...products].sort(), modules: [...modules].sort(), clients: [...clients].sort() };
-  }
 
   /* ═══════════════════════════════════════════════════════════════
      TreeView
@@ -553,6 +362,7 @@
       html += this._metaRow('Status', fm.status ? '<span class="status-pill" style="background:' + getStatusColor(fm.status) + '">' + ESC(fm.status) + '</span>' : '&mdash;');
       html += this._metaRow('Filename', '<code>' + ESC(card.filename) + '.md</code>');
 
+      if (fm.release) html += this._metaRow('Release', ESC(fm.release));
       if (fm.product) html += this._metaRow('Product', ESC(fm.product));
       if (fm.module) html += this._metaRow('Module', ESC(fm.module));
       if (fm.client) html += this._metaRow('Client', ESC(fm.client));
@@ -690,6 +500,16 @@
       const statuses = STATUS_OPTIONS[type] || [];
       if (statuses.length > 0) html += this._buildField('status', 'Status', 'select', fm.status, { options: statuses });
 
+      /* Release field for initiative and epic types */
+      if (type === 'initiative' || type === 'epic') {
+        var releaseNames = [];
+        var rmConfig = CardData.roadmapConfig;
+        if (rmConfig && Array.isArray(rmConfig.releases)) {
+          releaseNames = rmConfig.releases.map(function (r) { return r.name; });
+        }
+        html += this._buildField('release', 'Release', 'datalist', fm.release, { options: releaseNames, datalistId: 'pfl-release-options' });
+      }
+
       html += this._buildField('product', 'Product', 'select', fm.product, { options: taxonomy.products });
       html += this._buildField('module', 'Module', 'select', fm.module, { options: taxonomy.modules });
       html += this._buildField('client', 'Client', 'select', fm.client, { options: taxonomy.clients });
@@ -767,6 +587,15 @@
             return '<option value="' + ESC(o) + '"' + (o === value ? ' selected' : '') + '>' + ESC(labels[i] || o) + '</option>';
           }).join('') +
         '</select>';
+      } else if (type === 'datalist') {
+        const options = opts.options || [];
+        const dlId = opts.datalistId || 'pfl-dl-' + key;
+        input = '<input type="text" data-pfl-field="' + key + '" list="' + dlId + '" value="' + ESC(value || '') + '">' +
+          '<datalist id="' + dlId + '">' +
+          options.map(function (o) {
+            return '<option value="' + ESC(o) + '">';
+          }).join('') +
+          '</datalist>';
       } else if (type === 'number') {
         input = '<input type="number" data-pfl-field="' + key + '" value="' + (value !== null && value !== undefined ? value : '') + '">';
       } else if (type === 'date') {

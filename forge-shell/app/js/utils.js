@@ -13,25 +13,94 @@ ForgeUtils.YAML = {
     const lines = str.split('\n');
     let currentKey = null;
     let inArray = false;
+    let inObjectArray = false;
+    let currentObj = null;
+    let currentObjKey = null;
+    let inNestedArray = false;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith('#')) continue;
 
-      if (/^\s+- /.test(line) && inArray && currentKey) {
-        const val = trimmed.substring(2).trim();
-        result[currentKey].push(this._parseValue(val));
+      /* ── Nested array inside an object item (6-space or deeper indent) ── */
+      if (inNestedArray && currentObj && currentObjKey) {
+        const nestedMatch = line.match(/^(\s{6,})- (.+)$/);
+        if (nestedMatch) {
+          currentObj[currentObjKey].push(this._parseValue(nestedMatch[2].trim()));
+          continue;
+        }
+        inNestedArray = false;
+      }
+
+      /* ── Object property lines (4-space indent, not a list item) ── */
+      if (inObjectArray && currentObj && /^    [a-zA-Z_]/.test(line) && !line.match(/^\s+- /)) {
+        const objColonIdx = trimmed.indexOf(':');
+        if (objColonIdx > 0) {
+          const objKey = trimmed.substring(0, objColonIdx).trim();
+          const objVal = trimmed.substring(objColonIdx + 1).trim();
+          currentObjKey = objKey;
+          if (objVal === '' || objVal === '~') {
+            /* Check if next lines are a nested array */
+            let next = i + 1;
+            while (next < lines.length && lines[next].trim() === '') next++;
+            if (next < lines.length && /^\s{6,}- /.test(lines[next])) {
+              currentObj[objKey] = [];
+              inNestedArray = true;
+            } else {
+              currentObj[objKey] = null;
+            }
+          } else if (objVal === '[]') {
+            currentObj[objKey] = [];
+          } else {
+            currentObj[objKey] = this._parseValue(objVal);
+          }
+          continue;
+        }
+      }
+
+      /* ── Array item line (2-space indent) ── */
+      if (/^\s{2}- /.test(line) && inArray && currentKey) {
+        const afterDash = trimmed.substring(2).trim();
+        /* Check if this is an object item (has key: value) */
+        const kvMatch = afterDash.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*(.*)$/);
+        if (kvMatch) {
+          /* Start a new object in the array */
+          currentObj = {};
+          const firstKey = kvMatch[1];
+          const firstVal = kvMatch[2].trim();
+          currentObj[firstKey] = firstVal === '' ? null : this._parseValue(firstVal);
+          currentObjKey = firstKey;
+          result[currentKey].push(currentObj);
+          inObjectArray = true;
+          inNestedArray = false;
+          continue;
+        }
+        /* Simple scalar array item */
+        currentObj = null;
+        inObjectArray = false;
+        inNestedArray = false;
+        result[currentKey].push(this._parseValue(afterDash));
         continue;
       }
 
-      if (inArray && !/^\s/.test(line)) inArray = false;
+      /* ── Exit array on de-indented line ── */
+      if (inArray && !/^\s/.test(line)) {
+        inArray = false;
+        inObjectArray = false;
+        currentObj = null;
+        inNestedArray = false;
+      }
 
+      /* ── Top-level key: value ── */
       const colonIdx = line.indexOf(':');
       if (colonIdx > 0 && /^[a-zA-Z_]/.test(line)) {
         const key = line.substring(0, colonIdx).trim();
         let value = line.substring(colonIdx + 1).trim();
         currentKey = key;
+        currentObj = null;
+        inObjectArray = false;
+        inNestedArray = false;
 
         if (value === '' || value === '~') {
           let next = i + 1;
@@ -76,9 +145,17 @@ ForgeUtils.YAML = {
     return v;
   },
 
+  _needsQuote(key, s) {
+    const quotedFields = new Set(['title', 'description', 'stakeholders', 'version', 'name']);
+    return quotedFields.has(key) || s.includes(': ') || s.includes(' #') || s === '';
+  },
+
+  _quoteString(s) {
+    return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+  },
+
   stringify(obj, fieldOrder) {
     const order = fieldOrder || Object.keys(obj);
-    const quotedFields = new Set(['title', 'description', 'stakeholders', 'version']);
     const lines = [];
     const written = new Set();
 
@@ -89,6 +166,33 @@ ForgeUtils.YAML = {
       } else if (Array.isArray(value)) {
         if (value.length === 0) {
           lines.push(`${key}: []`);
+        } else if (typeof value[0] === 'object' && value[0] !== null) {
+          /* Array of objects */
+          lines.push(`${key}:`);
+          value.forEach(item => {
+            const keys = Object.keys(item);
+            keys.forEach((k, idx) => {
+              const v = item[k];
+              const prefix = idx === 0 ? '  - ' : '    ';
+              if (v === null || v === undefined) {
+                lines.push(`${prefix}${k}: null`);
+              } else if (Array.isArray(v)) {
+                if (v.length === 0) {
+                  lines.push(`${prefix}${k}: []`);
+                } else {
+                  lines.push(`${prefix}${k}:`);
+                  v.forEach(sub => lines.push(`      - ${sub}`));
+                }
+              } else {
+                const s = String(v);
+                if (this._needsQuote(k, s)) {
+                  lines.push(`${prefix}${k}: ${this._quoteString(s)}`);
+                } else {
+                  lines.push(`${prefix}${k}: ${s}`);
+                }
+              }
+            });
+          });
         } else {
           lines.push(`${key}:`);
           value.forEach(item => lines.push(`  - ${item}`));
@@ -99,8 +203,8 @@ ForgeUtils.YAML = {
         lines.push(`${key}: ${value}`);
       } else {
         const s = String(value);
-        if (quotedFields.has(key) || s.includes(': ') || s.includes(' #') || s === '') {
-          lines.push(`${key}: "${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`);
+        if (this._needsQuote(key, s)) {
+          lines.push(`${key}: ${this._quoteString(s)}`);
         } else {
           lines.push(`${key}: ${s}`);
         }

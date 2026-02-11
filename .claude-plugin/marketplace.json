@@ -27,6 +27,11 @@
       "name": "forge-shell",
       "source": "./forge-shell",
       "description": "Unified shell that provides a navbar-driven index page for switching between plugin dashboards via iframes."
+    },
+    {
+      "name": "rovo-agent-forge",
+      "source": "./rovo-agent-forge",
+      "description": "Interactive builders for Atlassian Rovo agents. Guides through Jira and Confluence agent configuration via adaptive interview and outputs copy-ready sections for Rovo Studio."
     }
   ]
 }

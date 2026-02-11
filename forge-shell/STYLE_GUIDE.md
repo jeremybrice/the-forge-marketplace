@@ -118,6 +118,25 @@ All Forge plugin dashboards must use a consistent top toolbar. The **Cognitive F
 | Folder badge font | 13px    |
 | Refresh text font | 12px    |
 
+### Mandatory Shared Classes
+
+These CSS classes are defined in `components.css` and **must** be reused by all plugin views. Do not create plugin-prefixed alternatives for these elements.
+
+| Shared Class | Purpose | Defined In |
+|---|---|---|
+| `.plugin-toolbar` | Top toolbar container (height, gap, padding, bg) | `components.css` |
+| `.plugin-toolbar .toolbar-title` | Plugin title text (font-weight: 700, font-size: 15px) | `components.css` |
+| `.plugin-toolbar .folder-path` | Folder badge (font-size: 13px, padding: 4px 10px) | `components.css` |
+| `.plugin-toolbar .btn-icon` | Icon buttons (32x32px, font-size: 16px, border) | `components.css` |
+| `.plugin-toolbar .spacer` | Flex spacer | `components.css` |
+| `.plugin-toolbar .refresh-indicator` | Refresh timestamp text (font-size: 12px) | `components.css` |
+| `.view-toggle` | Tab/toggle pill group (padding: 4px, border-radius: 8px) | `components.css` |
+| `.view-toggle button` | Toggle button (font-size: 13px, padding: 6px 14px) | `components.css` |
+| `.view-toggle button.active` | Active toggle state (bg-card, shadow) | `components.css` |
+| `.filter-btn` | Sidebar filter buttons | `components.css` |
+
+Plugin-specific toolbar additions (e.g., year navigation, filter badges) should be added as extra elements using plugin-prefixed classes (e.g., `.rm-year-nav`, `.rm-filter-badge`) scoped under `.plugin-toolbar`. Never override the base shared styles.
+
 ### JS Conventions
 
 - **Folder badge**: Use `#folder-path` (container) and `#folder-name` (text span). Toggle the `hidden` class to show/hide. Set `folderNameEl.textContent` to update the displayed name.
@@ -131,6 +150,7 @@ All Forge plugin dashboards must use a consistent top toolbar. The **Cognitive F
 | Cognitive Forge     | `cognitive-forge/dashboard.html`      | Yes         | No              |
 | Product Forge Local | `product-forge-local/viewer.html`     | Yes         | No              |
 | Productivity        | `productivity/skills/dashboard.html`  | No          | Yes (Tasks/Memory, Board/List) |
+| Roadmap             | (SPA view in forge-shell)             | No          | Yes (Card/Timeline, Quarterly/Monthly) |
 
 ### Font Awesome Icons by Plugin
 
