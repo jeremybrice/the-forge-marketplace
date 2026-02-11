@@ -1,5 +1,6 @@
 {
   "path": "viewer.html",
   "label": "Product Forge",
-  "icon": "<i class=\"fa-solid fa-clipboard-list\"></i>"
+  "icon": "<i class=\"fa-solid fa-clipboard-list\"></i>",
+  "targetName": "product-viewer.html"
 }

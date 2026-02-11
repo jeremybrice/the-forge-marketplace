@@ -4,27 +4,41 @@ Unified shell plugin that provides a navbar-driven index page for switching betw
 
 ## Commands
 
-- `/shell:add <plugin-name>` — Register a plugin in the shell sidebar. Reads marketplace.json and the plugin's dashboard manifest field.
-- `/shell:remove <plugin-name>` — Remove a plugin from the shell sidebar.
-- `/shell:open` — Open shell.html in the browser.
+- `/shell:add <plugin-name>` — Register a plugin in the shell sidebar. Copies the plugin's dashboard HTML into `src/` alongside `shell.html` and `shell-registry.json`.
+- `/shell:remove <plugin-name>` — Remove a plugin from the shell sidebar and delete its copied dashboard file.
+- `/shell:open` — Open `src/shell.html` in the browser.
 
 ## Key Files
 
-- `shell.html` — The unified shell page with sidebar nav and iframe content area. Uses the File System Access API to read `shell-registry.json` from the user's work folder at runtime.
+- `shell.html` — The unified shell page with sidebar nav and iframe content area. Supports dual-mode loading: auto-fetches the registry over HTTP when served, or uses the File System Access API when opened via `file://`.
 
 ## Architecture
 
-- **Registry lives in the work folder** — `/shell:add` writes `shell-registry.json` to the user's project root (the only writable location). `shell.html` reads it dynamically via the File System Access API.
-- **IndexedDB persistence** — The selected directory handle is saved in IndexedDB (`ForgeShell` DB) so it persists across page reloads without re-prompting.
+- **Copy-to-src model** — `/shell:add` copies `shell.html` and each plugin's dashboard HTML into a `src/` folder in the user's project. All dashboards become siblings, and `dashboardUrl` values are simple filenames (e.g., `"cognitive-viewer.html"`). This makes the UI self-contained and portable.
+- **Dual-mode loading** — When served over HTTP (e.g., `python3 -m http.server` in `src/`), the shell auto-fetches `shell-registry.json` without any directory picker. When opened via `file://`, it falls back to the File System Access API with IndexedDB handle persistence.
+- **IndexedDB persistence** — The selected directory handle is saved in IndexedDB (`ForgeShell` DB) so it persists across `file://` reloads without re-prompting.
 - **iframes** for full isolation — existing plugin dashboards work unmodified inside the shell.
 - **Shell owns the theme** and broadcasts to iframes via `postMessage({ type: 'forge-shell:theme', theme: 'dark' | 'light' })`.
 - Participating plugins listen for the `forge-shell:theme` message and apply the theme via `data-theme` attribute.
 - Hash routing (`shell.html#plugin-name`) preserves the active plugin across page reloads.
-- **Version-aware paths** — `dashboardUrl` values use the format `../../<plugin>/<version>/<path>` to resolve correctly from `forge-shell/<version>/shell.html`.
+
+## Target Structure
+
+After running `/shell:add` for each plugin, the user's project contains:
+
+```
+my-project/
+└── src/
+    ├── shell.html
+    ├── shell-registry.json
+    ├── cognitive-viewer.html
+    ├── product-viewer.html
+    └── memory-viewer.html
+```
 
 ## Registry Format
 
-The `shell-registry.json` file is created in the user's work folder by `/shell:add`:
+The `src/shell-registry.json` file is created in the user's `src/` folder by `/shell:add`:
 
 ```json
 {
@@ -32,8 +46,8 @@ The `shell-registry.json` file is created in the user's work folder by `/shell:a
     {
       "name": "productivity",
       "label": "Productivity",
-      "icon": "📋",
-      "dashboardUrl": "../../productivity/1.1.0/skills/dashboard.html"
+      "icon": "<i class=\"fa-solid fa-brain\"></i>",
+      "dashboardUrl": "memory-viewer.html"
     }
   ]
 }

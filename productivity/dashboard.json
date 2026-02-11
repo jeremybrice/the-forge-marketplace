@@ -1,5 +1,6 @@
 {
   "path": "skills/dashboard.html",
   "label": "Productivity",
-  "icon": "<i class=\"fa-solid fa-brain\"></i>"
+  "icon": "<i class=\"fa-solid fa-brain\"></i>",
+  "targetName": "memory-viewer.html"
 }

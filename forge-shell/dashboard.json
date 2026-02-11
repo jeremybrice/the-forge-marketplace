@@ -1,5 +1,6 @@
 {
   "path": "shell.html",
   "label": "Forge Shell",
-  "icon": "🐚"
+  "icon": "<i class=\"fa-solid fa-terminal\"></i>",
+  "targetName": "shell.html"
 }

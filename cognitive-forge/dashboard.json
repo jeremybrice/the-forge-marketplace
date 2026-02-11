@@ -1,5 +1,6 @@
 {
   "path": "dashboard.html",
   "label": "Cognitive Forge",
-  "icon": "<i class=\"fa-solid fa-scale-balanced\"></i>"
+  "icon": "<i class=\"fa-solid fa-scale-balanced\"></i>",
+  "targetName": "cognitive-viewer.html"
 }

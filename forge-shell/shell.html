@@ -292,7 +292,7 @@
       <h1>Forge Shell</h1>
       <p>Unified dashboard for all your Forge plugins. Select your work folder to load the plugin registry.</p>
       <button class="btn-select" onclick="selectWorkFolder()">Select Work Folder</button>
-      <p class="note">Choose the project directory where <code>shell-registry.json</code> was created by <code>/shell:add</code>.</p>
+      <p class="note">Choose the <code>src/</code> directory in your project where <code>/shell:add</code> copied the dashboards.</p>
     </div>
   </div>
 
@@ -409,8 +409,26 @@
     }
 
     async function reloadRegistry() {
+      // HTTP mode: fetch directly
+      const proto = location.protocol;
+      if (proto === 'http:' || proto === 'https:') {
+        try {
+          const resp = await fetch('shell-registry.json', { cache: 'no-store' });
+          if (resp.ok) {
+            REGISTRY = await resp.json();
+            renderNav();
+            const hash = location.hash.replace('#', '');
+            const match = REGISTRY.plugins.find(p => p.name === hash);
+            if (match) selectPlugin(match.name);
+            else if (REGISTRY.plugins.length > 0) selectPlugin(REGISTRY.plugins[0].name);
+            else showEmptyState();
+            return;
+          }
+        } catch (e) { /* fall through to File System API */ }
+      }
+
+      // File mode: use directory handle
       if (workDirHandle) {
-        // Re-verify permission
         const perm = await workDirHandle.queryPermission({ mode: 'read' });
         if (perm === 'granted') {
           await loadRegistry(workDirHandle);
@@ -584,8 +602,37 @@
     /* ═══════════════════════════════════════════════════════════════
        BOOT
        ═══════════════════════════════════════════════════════════════ */
-    applyTheme();
-    restoreHandle();
+    async function boot() {
+      applyTheme();
+
+      const proto = location.protocol;
+      if (proto === 'http:' || proto === 'https:') {
+        try {
+          const resp = await fetch('shell-registry.json', { cache: 'no-store' });
+          if (resp.ok) {
+            REGISTRY = await resp.json();
+            renderNav();
+            showApp();
+
+            // Hide the folder-picker button in HTTP mode
+            const folderBtn = document.querySelector('.sidebar-bottom .btn-icon[title="Change work folder"]');
+            if (folderBtn) folderBtn.style.display = 'none';
+
+            const hash = location.hash.replace('#', '');
+            const match = REGISTRY.plugins.find(p => p.name === hash);
+            if (match) selectPlugin(match.name);
+            else if (REGISTRY.plugins.length > 0) selectPlugin(REGISTRY.plugins[0].name);
+            else showEmptyState();
+            return;
+          }
+        } catch (e) { /* fall through to file:// flow */ }
+      }
+
+      // file:// protocol — use File System Access API
+      await restoreHandle();
+    }
+
+    boot();
   </script>
 </body>
 </html>
