@@ -9,6 +9,7 @@ const PLUGINS = [
   { id: 'product-forge-local', label: 'Product Forge',    icon: 'fa-solid fa-clipboard-list', requiredDir: 'cards' },
   { id: 'roadmap',             label: 'Roadmap',          icon: 'fa-solid fa-road',           requiredDir: 'cards' },
   { id: 'productivity',        label: 'Productivity',     icon: 'fa-solid fa-list-check',     requiredDir: null },
+  { id: 'rovo-agent-forge',    label: 'Rovo Agent Forge', icon: 'fa-solid fa-robot',          requiredDir: 'rovo-agents' },
 ];
 
 /* ═══════════════════════════════════════════════════════════════

@@ -254,6 +254,62 @@ Enter these 3 starters:
 
 ---
 
+## Phase 11: File Persistence
+
+After presenting the assembled configuration output to the user, persist the agent configuration as a file in the workspace.
+
+1. **Generate the folder slug** from the agent name using this algorithm: convert to lowercase, replace spaces with hyphens, strip all characters that are not lowercase letters, digits, or hyphens, collapse consecutive hyphens into one, and trim leading or trailing hyphens. For example, "Ticket Generation and Triage Agent" becomes `ticket-generation-and-triage-agent`.
+
+2. **Create the directory** `rovo-agents/{slug}/` in the user's project root. If `rovo-agents/` does not exist, create it first.
+
+3. **Write `agent.md`** to `rovo-agents/{slug}/agent.md` with the following structure:
+
+   ```yaml
+   ---
+   name: "{Agent Name from Phase 2}"
+   platform: jira
+   description: "{Agent Description from Phase 2}"
+   status: draft
+   skills:
+     - "{Skill 1 from Phase 6}"
+     - "{Skill 2}"
+   knowledge_sources:
+     - "{Knowledge Source 1 from Phase 5}"
+   conversation_starters:
+     - "{Starter 1 from Phase 7}"
+     - "{Starter 2}"
+     - "{Starter 3}"
+   owner: "{Owner from Phase 8}"
+   collaborators: [{Collaborators list from Phase 8}]
+   visibility: "{Visibility from Phase 8}"
+   created: {today's date in YYYY-MM-DD format}
+   updated: {today's date in YYYY-MM-DD format}
+   ---
+
+   ## Behavior
+   {Full behavior instructions text from Phase 3}
+
+   ## Scenarios
+
+   ### Default: {Default Scenario Name from Phase 4}
+   {Default scenario instructions from Phase 4}
+
+   **Trigger keywords**: (none — default scenario)
+
+   ### Scenario 2: {Scenario Name}
+   {Scenario instructions}
+
+   **Trigger keywords**: {comma-separated trigger keywords}
+
+   {Repeat for additional scenarios}
+   ```
+
+4. **If the file already exists** at `rovo-agents/{slug}/agent.md`, present a diff showing the changes between the existing file and the new content. Ask the user for confirmation before overwriting.
+
+5. **Confirm** to the user: "Agent configuration saved to `rovo-agents/{slug}/agent.md`. You can view and edit it in the Forge Shell Rovo Agent Forge dashboard."
+
+---
+
 ## Adaptive Interview Behavior
 
 - **Be conversational, not mechanical**: Don't ask every question in sequence if context already provides answers. If the user described "I need an agent to triage support tickets in our SUPPORT project," skip questions you can infer (use case = triage, project = SUPPORT).

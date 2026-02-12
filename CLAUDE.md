@@ -1,6 +1,6 @@
 # CLAUDE.md — The Forge Marketplace
 
-Claude Code plugin marketplace: 4 plugins, local-first markdown persistence. See [README.md](README.md) for full plugin descriptions and installation instructions.
+Claude Code plugin marketplace: 5 plugins, local-first markdown persistence. See [README.md](README.md) for full plugin descriptions and installation instructions.
 
 ## Repository Structure
 
@@ -11,6 +11,7 @@ the-forge-marketplace/
   cognitive-forge/            ← v1.2.0 — Multi-agent debate & exploration
   product-forge-local/        ← v1.0.5 — Local-first product card management
   productivity/               ← v1.1.0 — Tasks, planning, organizational memory
+  rovo-agent-forge/           ← v1.0.0 — Atlassian Rovo agent builders
   forge-shell/                ← v1.0.0 — Unified dashboard shell
   STYLE_GUIDE.md              ← Shared dashboard UI standards
   README.md
@@ -36,7 +37,9 @@ Every plugin follows this standard layout:
   hooks/                      ← Optional: hook definitions
 ```
 
-Not every plugin has every directory. Cognitive Forge has `agents/` and `sessions/`. Product Forge Local and Productivity have `skills/` with multiple skill folders. Forge Shell has only `commands/`.
+Not every plugin has every directory. Cognitive Forge has `agents/` and `sessions/`. Product Forge Local and Productivity have `skills/` with multiple skill folders. Forge Shell has only `commands/`. Rovo Agent Forge has `skills/` and `sample-configs/`.
+
+> **Note:** The `dashboard.json` files are legacy artifacts from the original iframe-based shell. The Forge Shell SPA no longer reads them. New plugins register via the `PLUGINS` array in `forge-shell/app/js/shell.js` and provide a view controller in `forge-shell/app/js/`.
 
 ## Naming Conventions
 
@@ -66,13 +69,19 @@ Not every plugin has every directory. Cognitive Forge has `agents/` and `session
 
 **Slug generation:** lowercase, spaces to hyphens, strip non-alphanumeric (except hyphens), collapse consecutive hyphens, trim leading/trailing hyphens.
 
+**Rovo agent configs** (Rovo Agent Forge, written to user's project `rovo-agents/` directory):
+
+- Agent folders: `{slugified-agent-name}/` inside `rovo-agents/`
+- Agent config file: always `agent.md` inside the agent folder (e.g., `rovo-agents/ticket-triage-agent/agent.md`)
+- Slug generation follows the same rules as above: lowercase, spaces to hyphens, strip non-alphanumeric (except hyphens), collapse consecutive hyphens, trim edges
+
 ## Config Files Reference
 
 | File | Purpose |
 |------|---------|
 | `.claude-plugin/marketplace.json` | Root catalog listing all plugins |
 | `{plugin}/.claude-plugin/plugin.json` | Plugin manifest (name, version, description, author) |
-| `{plugin}/dashboard.json` | Dashboard registration (path, label, icon) for Forge Shell |
+| `{plugin}/dashboard.json` | **Legacy artifact.** Was used for iframe-based dashboard registration. The SPA now uses the hardcoded `PLUGINS` array in `forge-shell/app/js/shell.js` and view controllers in `forge-shell/app/js/` |
 | `STYLE_GUIDE.md` | Shared toolbar and theming standards for all dashboards |
 
 ## File Format Patterns
@@ -158,6 +167,14 @@ Relationships are bidirectional using filenames without the `.md` extension:
 - Decision: Active, Revised, Reversed
 - Release Note: Draft, Published, Internal Only
 
+## Rovo Agent Configs (Rovo Agent Forge)
+
+Rovo Agent Forge saves agent configurations to the user's project root in `rovo-agents/{slug}/agent.md`. Each agent config uses YAML frontmatter with at minimum: `name`, `description`, `status`, `created`, `updated`.
+
+**Status enums:** Draft, Ready, Deployed
+
+The `rovo-agents/` directory lives at the user's project root, not inside the plugin folder. The path is `rovo-agents/{slug}/agent.md` relative to the working directory.
+
 ## Plugin Relationships
 
 ```
@@ -172,21 +189,27 @@ Relationships are bidirectional using filenames without the `.md` extension:
 │    Forge     │   (debates/explorations)  │
 └─────────────┘                            │
         │                                  │
+┌─────────────────┐                        │
+│  Rovo Agent     │  writes to             │
+│    Forge        │  rovo-agents/          │
+└─────────────────┘                        │
+        │                                  │
         └──────────┐          ┌────────────┘
                    ▼          ▼
               ┌────────────────────┐
               │    Forge Shell     │
-              │  (reads each       │
-              │   dashboard.json   │
-              │   for iframe       │
-              │   registration)    │
+              │  (unified SPA with │
+              │   built-in view    │
+              │   controllers for  │
+              │   each plugin)     │
               └────────────────────┘
 ```
 
 - **Productivity** provides the organizational memory layer (`memory/context/` files with products, modules, clients, teams) consumed by Product Forge Local for taxonomy validation.
 - **Cognitive Forge** operates independently, writing debate and exploration sessions to its own `sessions/` directory.
 - **Product Forge Local** reads taxonomy from Productivity's memory files and writes product cards to the user's project `cards/` directory.
-- **Forge Shell** reads `dashboard.json` from each plugin to register dashboards as iframes in its unified shell.
+- **Rovo Agent Forge** provides interactive builders for Atlassian Rovo agents. Saves agent configurations to the user's project `rovo-agents/` directory. Has a dedicated view controller in the Forge Shell SPA for visualizing and editing agents.
+- **Forge Shell** is a unified SPA with built-in view controllers for each plugin. Plugins register via the `PLUGINS` array in `forge-shell/app/js/shell.js`.
 
 ## Dashboard / UI Standards
 
@@ -206,7 +229,7 @@ See `STYLE_GUIDE.md` for the full specification. Key facts:
 1. Create `{plugin-name}/` directory (kebab-case) at repo root
 2. Create `{plugin-name}/.claude-plugin/plugin.json` with name, version, description, author
 3. Create `{plugin-name}/commands/` with at least one command `.md` file
-4. Create `{plugin-name}/dashboard.json` if the plugin has a dashboard (path, label, icon)
+4. If the plugin has a dashboard view, add it to the `PLUGINS` array in `forge-shell/app/js/shell.js` and create a view controller in `forge-shell/app/js/`
 5. Add the plugin entry to `.claude-plugin/marketplace.json` in the `plugins` array
 6. Add the plugin to the table and descriptions in `README.md`
 7. If the plugin has a dashboard, add it to the Implemented Plugins table in `STYLE_GUIDE.md`
@@ -238,3 +261,4 @@ See `STYLE_GUIDE.md` for the full specification. Key facts:
 - **Story numbers are zero-padded 3-digit sequential** (001, 002, ...). Scan `cards/stories/` for the highest existing number and increment by one.
 - **Cards directory lives at the user's project root**, not inside the plugin folder. The path is `cards/{type}s/{filename}.md` relative to the working directory.
 - **Date format is ISO 8601:** `YYYY-MM-DD` for all frontmatter date fields.
+- **Rovo agents directory lives at the user's project root**, not inside the plugin folder. The path is `rovo-agents/{slug}/agent.md` relative to the working directory.

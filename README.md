@@ -43,9 +43,17 @@ Task management, daily planning, and organizational memory. Syncs with your cale
 - `/productivity:remember` — Store important context in organizational memory
 - `/productivity:setup-org` — Configure organizational taxonomy (products, modules, clients, teams)
 
+### Rovo Agent Forge v1.0.0
+
+Interactive builders for Atlassian Rovo agents. Guides through Jira and Confluence agent configuration via adaptive interview and outputs copy-ready sections for Rovo Studio. Agent configurations are saved to `rovo-agents/` in your project root and can be visualized and edited in the Forge Shell dashboard.
+
+**Commands:**
+- `/rovo-agent-forge:jira-agent` — Build a Jira-focused Rovo agent configuration
+- `/rovo-agent-forge:confluence-agent` — Build a Confluence-focused Rovo agent configuration
+
 ### Forge Shell v1.0.0
 
-Unified dashboard shell that provides a navbar-driven index page for switching between plugin dashboards via iframes. Acts as the single entry point for all visual plugin interfaces.
+Unified dashboard shell that provides a single-page application for switching between plugin views. Acts as the single entry point for all visual plugin interfaces.
 
 **Commands:**
 - `/forge-shell:add` — Register a plugin dashboard in the shell
@@ -53,12 +61,15 @@ Unified dashboard shell that provides a navbar-driven index page for switching b
 
 ## How They Work Together
 
-The four plugins form an integrated workflow:
+The five plugins form an integrated workflow:
 
 1. **Productivity** provides the organizational memory layer (products, modules, clients, teams) that Product Forge Local uses for taxonomy validation.
 2. **Cognitive Forge** offers deep reasoning tools for evaluating product concepts, architectural decisions, or strategic directions before they become cards.
 3. **Product Forge Local** turns approved concepts into structured work items (Initiatives, Epics, Stories) with full hierarchy tracking.
-4. **Forge Shell** unifies all three dashboards into a single tabbed interface for browsing sessions, cards, and tasks without leaving the browser.
+4. **Rovo Agent Forge** builds Atlassian Rovo agent configurations through guided interviews, saving them to `rovo-agents/` in your project root.
+5. **Forge Shell** unifies all plugin views into a single-page application for browsing sessions, cards, tasks, and agent configs without leaving the browser.
+
+Plugins write to dedicated directories in your project root: `cards/` (Product Forge Local), `sessions/` (Cognitive Forge), and `rovo-agents/` (Rovo Agent Forge).
 
 ## Installation
 
@@ -95,15 +106,7 @@ Or add it directly to your settings:
 
 ## Setting Up the Unified Shell
 
-After installing plugins, register their dashboards in Forge Shell:
-
-```
-/forge-shell:add cognitive-forge
-/forge-shell:add product-forge-local
-/forge-shell:add productivity
-```
-
-Then open the unified shell with `/forge-shell:open`.
+After installing plugins, open the unified shell with `/forge-shell:open`. All plugin views (including Cognitive Forge, Product Forge Local, Productivity, and Rovo Agent Forge) are built into the SPA.
 
 ## Available Plugins
 
@@ -112,6 +115,7 @@ Then open the unified shell with `/forge-shell:open`.
 | [**Cognitive Forge**](./cognitive-forge/) | Multi-agent concept evaluation through structured debate and interactive exploration | 1.2.0 | Reasoning |
 | [**Product Forge Local**](./product-forge-local/) | Local-first product management with structured card generation | 1.0.5 | Product Management |
 | [**Productivity**](./productivity/) | Task management, daily planning, and organizational memory | 1.1.0 | Productivity |
+| [**Rovo Agent Forge**](./rovo-agent-forge/) | Atlassian Rovo agent builders with dashboard visualization | 1.0.0 | Agents |
 | [**Forge Shell**](./forge-shell/) | Unified dashboard shell for all plugin interfaces | 1.0.0 | Shell |
 
 ## Contributing

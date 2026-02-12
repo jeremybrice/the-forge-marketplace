@@ -151,14 +151,16 @@ Plugin-specific toolbar additions (e.g., year navigation, filter badges) should 
 | Product Forge Local | `product-forge-local/viewer.html`     | Yes         | No              |
 | Productivity        | `productivity/skills/dashboard.html`  | No          | Yes (Tasks/Memory, Board/List) |
 | Roadmap             | (SPA view in forge-shell)             | No          | Yes (Card/Timeline, Quarterly/Monthly) |
+| Rovo Agent Forge    | (SPA view in forge-shell)             | Yes         | No              |
 
 ### Font Awesome Icons by Plugin
 
-| Plugin              | Title Icon          | Notes                     |
-| ------------------- | ------------------- | ------------------------- |
-| Cognitive Forge     | `fa-brain`          | Reference implementation  |
-| Product Forge Local | `fa-clipboard-list` |                           |
-| Productivity        | `fa-brain`          | Save uses `fa-floppy-disk`|
+| Plugin              | Title Icon          | Notes                                   |
+| ------------------- | ------------------- | --------------------------------------- |
+| Cognitive Forge     | `fa-brain`          | Reference implementation                |
+| Product Forge Local | `fa-clipboard-list` |                                         |
+| Productivity        | `fa-brain`          | Save uses `fa-floppy-disk`              |
+| Rovo Agent Forge    | `fa-robot`          | Sidebar + detail panel, prefix `raf-`   |
 
 ### CSS Custom Properties (shared across all plugins)
 
