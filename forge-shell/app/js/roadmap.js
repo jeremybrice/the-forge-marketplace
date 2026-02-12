@@ -114,8 +114,8 @@
       ]);
       var content = '---\n' + yaml + '\n---\n';
       try {
-        var fh = await cardsHandle.getFileHandle('roadmap.md', { create: true });
-        await ForgeUtils.FS.writeFile(fh, content);
+        // Use ForgeFS to write the file (works in both browser and Tauri modes)
+        await ForgeFS.writeFile(cardsHandle, 'roadmap.md', content);
       } catch (e) {
         console.error('Failed to save roadmap.md:', e);
         ForgeUtils.Toast.show('Failed to save roadmap config: ' + e.message, 'error');
@@ -676,7 +676,13 @@
     },
 
     _renderLayout: function (view, rootHandle) {
-      var dirName = rootHandle ? rootHandle.name : '';
+      // Handle both FileSystemDirectoryHandle (browser) and path string (Tauri)
+      var dirName = '';
+      if (rootHandle) {
+        dirName = typeof rootHandle === 'string'
+          ? rootHandle.split('/').pop() || rootHandle.split('\\').pop() || rootHandle
+          : rootHandle.name;
+      }
 
       view.innerHTML =
         '<div class="rm-layout">' +

@@ -1,12 +1,28 @@
 # Forge Shell
 
-Unified single-page application (SPA) that provides a navbar-driven interface for browsing all plugin views with built-in view controllers. No iframes.
+**Desktop visualization app** for browsing project data created by Forge Marketplace plugins. Provides a unified single-page application (SPA) with built-in view controllers for all plugin views. No iframes.
 
-## Commands
+> **Note:** Forge Shell is a standalone desktop application, not a Claude Code plugin. Other plugins (Product Forge, Cognitive Forge, etc.) create the content; Forge Shell provides a visual interface for browsing it.
 
-- `/forge-shell:open` or `/shell:open` — Opens the Forge Shell SPA in your default browser (launches forge-shell/app/index.html)
-- `/shell:add <plugin-name>` — All plugins are built into Forge Shell and enabled by default. This command explains how to toggle visibility using edit mode (click the pencil icon in the sidebar)
-- `/shell:remove <plugin-name>` — Plugins cannot be removed but can be hidden from the sidebar. This command explains how to hide plugins using edit mode
+## Desktop App Installation
+
+### Development Mode
+
+```bash
+cd forge-shell
+npm install
+npm run tauri:dev
+```
+
+This launches the Tauri desktop app in development mode with hot reload.
+
+### Production Build
+
+```bash
+npm run tauri:build
+```
+
+This creates a platform-specific installer in `src-tauri/target/release/bundle/`.
 
 ## Key Files
 
@@ -109,17 +125,11 @@ forge-shell/
 │       ├── productivity.js     # ProductivityView controller
 │       ├── roadmap.js          # RoadmapView controller
 │       └── rovo-agent-forge.js # RovoAgentForgeView controller
-├── commands/
-│   ├── open.md
-│   ├── add.md
-│   └── remove.md
-└── .claude-plugin/
-    └── plugin.json
 ```
 
 ## Usage
 
-1. Run `/forge-shell:open` to launch the SPA in your browser
+1. Launch the desktop app via `npm run tauri:dev` (development) or the installed app (production)
 2. Select your project root directory when prompted
 3. Use the sidebar to navigate between plugin views
 4. Toggle dark/light theme with the moon/sun icon

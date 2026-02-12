@@ -66,31 +66,49 @@
 
   /* ═══════════════════════════════════════════════════════════
      Scanning — read agents from FS
+     Uses ForgeFS abstraction for dual-mode (browser/Tauri) support
      ═══════════════════════════════════════════════════════════ */
   async function scanAgents() {
     if (!agentsHandle) return [];
 
     var agents = [];
     try {
-      for await (var entry of agentsHandle.values()) {
+      // List directories in rovo-agents/ folder
+      var entries = await ForgeFS.readDir(agentsHandle, '');
+
+      for (var i = 0; i < entries.length; i++) {
+        var entry = entries[i];
         if (entry.kind !== 'directory') continue;
-        var dirHandle = entry;
+
         var slug = entry.name;
 
-        var fileResult = await ForgeUtils.FS.getFile(dirHandle, 'agent.md');
-        if (!fileResult) continue;
+        try {
+          // Read agent.md file from this directory
+          var content = await ForgeFS.readFile(agentsHandle, slug + '/agent.md');
+          var meta = await ForgeFS.getFileMeta(agentsHandle, slug + '/agent.md');
 
-        var parsed = ForgeUtils.parseFrontmatter(fileResult.text);
-        if (!parsed) continue;
+          var parsed = ForgeUtils.parseFrontmatter(content);
+          if (!parsed) continue;
 
-        agents.push({
-          slug: slug,
-          frontmatter: parsed.frontmatter,
-          body: parsed.body,
-          lastModified: fileResult.lastModified,
-          dirHandle: dirHandle,
-          fileHandle: fileResult.handle
-        });
+          // Build agent object
+          var agentPath = typeof agentsHandle === 'string'
+            ? agentsHandle + '/' + slug
+            : slug;
+
+          agents.push({
+            slug: slug,
+            frontmatter: parsed.frontmatter,
+            body: parsed.body,
+            lastModified: meta.modified,
+            dirHandle: agentPath,
+            fileHandle: typeof agentsHandle === 'string'
+              ? agentsHandle + '/' + slug + '/agent.md'
+              : slug + '/agent.md'
+          });
+        } catch (e) {
+          // Skip agents without agent.md or with read errors
+          console.warn('Failed to read agent ' + slug + ':', e);
+        }
       }
     } catch (e) {
       console.warn('Rovo Agent Forge scan error:', e);
@@ -781,7 +799,11 @@
         var folderName = $q('[data-raf-ref="folder-name"]');
         if (folderPath && folderName) {
           folderPath.classList.remove('hidden');
-          folderName.textContent = rootHandle.name + '/rovo-agents';
+          // Handle both FileSystemDirectoryHandle (browser) and path string (Tauri)
+          var dirName = typeof rootHandle === 'string'
+            ? rootHandle.split('/').pop() || rootHandle.split('\\').pop() || rootHandle
+            : rootHandle.name;
+          folderName.textContent = dirName + '/rovo-agents';
         }
         await loadAgents();
         startAutoRefresh();

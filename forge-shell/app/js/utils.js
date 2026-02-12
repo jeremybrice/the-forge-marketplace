@@ -394,72 +394,172 @@ ForgeUtils.DB = {
 };
 
 /* ═══════════════════════════════════════════════════════════════
-   FS — File System Access API Helpers
+   FS — File System Access API Helpers (Dual-Mode with ForgeFS)
    ═══════════════════════════════════════════════════════════════ */
 ForgeUtils.FS = {
+  /**
+   * Prompt user to select a directory
+   * Delegates to ForgeFS adapter for dual-mode support
+   */
   async pickDirectory(mode) {
-    return window.showDirectoryPicker({ mode: mode || 'readwrite' });
+    return await ForgeFS.pickDirectory();
   },
 
+  /**
+   * Request permission for a handle (browser mode only)
+   * In Tauri mode, permissions are handled at OS level
+   */
   async requestPermission(handle, mode) {
+    if (ForgeFS.isTauri()) {
+      return true; // Tauri handles permissions via OS
+    }
+
     const opts = { mode: mode || 'readwrite' };
     if (await handle.queryPermission(opts) === 'granted') return true;
     if (await handle.requestPermission(opts) === 'granted') return true;
     return false;
   },
 
+  /**
+   * Get a subdirectory
+   * Works with both FileSystemDirectoryHandle (browser) and path strings (Tauri)
+   */
   async getSubDir(parentHandle, name) {
     try {
-      return await parentHandle.getDirectoryHandle(name, { create: false });
+      if (ForgeFS.isTauri()) {
+        // In Tauri mode, parentHandle is a path string
+        const subPath = typeof parentHandle === 'string'
+          ? `${parentHandle}/${name}`
+          : name;
+
+        // Check if directory exists by trying to read it
+        const entries = await ForgeFS.readDir(parentHandle, name);
+        return subPath; // Return path string
+      } else {
+        // Browser mode: use File System Access API
+        return await parentHandle.getDirectoryHandle(name, { create: false });
+      }
     } catch {
       return null;
     }
   },
 
+  /**
+   * Get a file from a directory
+   * Returns {handle/path, file, text, lastModified}
+   */
   async getFile(dirHandle, name) {
     try {
-      const fh = await dirHandle.getFileHandle(name);
-      const file = await fh.getFile();
-      return { handle: fh, file, text: await file.text(), lastModified: file.lastModified };
+      if (ForgeFS.isTauri()) {
+        // In Tauri mode, dirHandle is a path string
+        const text = await ForgeFS.readFile(dirHandle, name);
+        const meta = await ForgeFS.getFileMeta(dirHandle, name);
+
+        return {
+          handle: `${dirHandle}/${name}`, // Return path for Tauri
+          file: null,
+          text: text,
+          lastModified: meta.modified
+        };
+      } else {
+        // Browser mode
+        const fh = await dirHandle.getFileHandle(name);
+        const file = await fh.getFile();
+        return {
+          handle: fh,
+          file,
+          text: await file.text(),
+          lastModified: file.lastModified
+        };
+      }
     } catch {
       return null;
     }
   },
 
-  async readAllMd(dirHandle) {
+  /**
+   * Read all markdown files in a directory
+   * Returns array of {name, handle/path, text, lastModified}
+   */
+  async readAllMd(dirHandle, relativePath = '') {
     const files = [];
+
     try {
-      for await (const entry of dirHandle.values()) {
-        if (entry.kind === 'file' && entry.name.endsWith('.md')) {
+      if (ForgeFS.isTauri()) {
+        // Tauri mode: use listMarkdownFiles
+        const mdFiles = await ForgeFS.listMarkdownFiles(dirHandle, relativePath);
+
+        // Read content for each file
+        for (const fileInfo of mdFiles) {
           try {
-            const file = await entry.getFile();
+            const text = await ForgeFS.readFile(dirHandle, fileInfo.path);
             files.push({
-              name: entry.name,
-              handle: entry,
-              text: await file.text(),
-              lastModified: file.lastModified
+              name: fileInfo.name,
+              handle: fileInfo.path, // Path string in Tauri mode
+              text: text,
+              lastModified: fileInfo.modified
             });
           } catch (e) {
-            console.warn(`Failed to read ${entry.name}:`, e);
+            console.warn(`Failed to read ${fileInfo.name}:`, e);
+          }
+        }
+      } else {
+        // Browser mode: iterate through directory
+        for await (const entry of dirHandle.values()) {
+          if (entry.kind === 'file' && entry.name.endsWith('.md')) {
+            try {
+              const file = await entry.getFile();
+              files.push({
+                name: entry.name,
+                handle: entry,
+                text: await file.text(),
+                lastModified: file.lastModified
+              });
+            } catch (e) {
+              console.warn(`Failed to read ${entry.name}:`, e);
+            }
           }
         }
       }
     } catch (e) {
       console.warn('Failed to enumerate directory:', e);
     }
+
     return files;
   },
 
+  /**
+   * Write content to a file
+   * Works with both FileSystemFileHandle (browser) and path strings (Tauri)
+   */
   async writeFile(fileHandle, content) {
-    const writable = await fileHandle.createWritable();
-    await writable.write(content);
-    await writable.close();
+    if (ForgeFS.isTauri()) {
+      // In Tauri mode, fileHandle is a path string
+      // We need to extract the root and relative path
+      // This is a bit tricky, so we'll use a helper
+      await ForgeFS.writeFile(null, fileHandle, content);
+    } else {
+      // Browser mode
+      const writable = await fileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+    }
   },
 
+  /**
+   * Check if a directory exists
+   */
   async dirExists(parentHandle, name) {
     try {
-      await parentHandle.getDirectoryHandle(name, { create: false });
-      return true;
+      if (ForgeFS.isTauri()) {
+        // Try to read the directory
+        await ForgeFS.readDir(parentHandle, name);
+        return true;
+      } else {
+        // Browser mode
+        await parentHandle.getDirectoryHandle(name, { create: false });
+        return true;
+      }
     } catch {
       return false;
     }

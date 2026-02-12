@@ -227,7 +227,12 @@ window.ProductivityView = (function () {
       nameEl.textContent = taskFileName;
       pathEl.classList.remove('hidden');
     } else if (activeMainTab === 'memory' && memoryDirHandle) {
-      nameEl.textContent = rootHandle ? rootHandle.name : '';
+      // Handle both FileSystemDirectoryHandle (browser) and path string (Tauri)
+      nameEl.textContent = rootHandle
+        ? (typeof rootHandle === 'string'
+            ? rootHandle.split('/').pop() || rootHandle.split('\\').pop() || rootHandle
+            : rootHandle.name)
+        : '';
       pathEl.classList.remove('hidden');
     } else {
       pathEl.classList.add('hidden');
@@ -1309,49 +1314,74 @@ window.ProductivityView = (function () {
 
   /* ══════════════════════════════════════════════════════════
      MEMORY — Loading
+     Uses ForgeFS abstraction for dual-mode (browser/Tauri) support
      ══════════════════════════════════════════════════════════ */
   async function loadMemory() {
     memoryData = { claudeMd: null, memoryFiles: [], memoryDirs: {} };
 
+    /* Try loading CLAUDE.md */
     try {
-      var claudeHandle = await memoryDirHandle.getFileHandle('CLAUDE.md');
-      var claudeFile = await claudeHandle.getFile();
-      memoryData.claudeMd = { content: await claudeFile.text(), fileHandle: claudeHandle };
+      var claudeContent = await ForgeFS.readFile(memoryDirHandle, 'CLAUDE.md');
+      var claudeHandle = typeof memoryDirHandle === 'string'
+        ? memoryDirHandle + '/CLAUDE.md'
+        : 'CLAUDE.md';
+      memoryData.claudeMd = { content: claudeContent, fileHandle: claudeHandle };
     } catch (e) { /* no CLAUDE.md */ }
 
+    /* Try loading memory/ directory */
     try {
-      var memDir = await memoryDirHandle.getDirectoryHandle('memory');
-      for await (var entry of memDir.values()) {
+      var entries = await ForgeFS.readDir(memoryDirHandle, 'memory');
+
+      for (var i = 0; i < entries.length; i++) {
+        var entry = entries[i];
+
         if (entry.kind === 'file' && entry.name.endsWith('.md')) {
           try {
-            var file = await entry.getFile();
+            var content = await ForgeFS.readFile(memoryDirHandle, 'memory/' + entry.name);
+            var fileHandle = typeof memoryDirHandle === 'string'
+              ? memoryDirHandle + '/memory/' + entry.name
+              : 'memory/' + entry.name;
+
             memoryData.memoryFiles.push({
               name: entry.name,
-              content: await file.text(),
-              fileHandle: entry
+              content: content,
+              fileHandle: fileHandle
             });
           } catch (e) { /* skip */ }
+
         } else if (entry.kind === 'directory') {
           memoryData.memoryDirs[entry.name] = [];
-          var subDir = entry;
-          for await (var subEntry of subDir.values()) {
-            if (subEntry.kind === 'file' && subEntry.name.endsWith('.md')) {
-              try {
-                var sf = await subEntry.getFile();
-                var content = await sf.text();
-                memoryData.memoryDirs[entry.name].push({
-                  name: subEntry.name,
-                  content: content,
-                  fileHandle: subEntry,
-                  dirHandle: subDir,
-                  parsed: parseMemoryMarkdown(content)
-                });
-              } catch (e) { /* skip */ }
+
+          try {
+            var subEntries = await ForgeFS.readDir(memoryDirHandle, 'memory/' + entry.name);
+
+            for (var j = 0; j < subEntries.length; j++) {
+              var subEntry = subEntries[j];
+
+              if (subEntry.kind === 'file' && subEntry.name.endsWith('.md')) {
+                try {
+                  var subContent = await ForgeFS.readFile(memoryDirHandle, 'memory/' + entry.name + '/' + subEntry.name);
+                  var subFileHandle = typeof memoryDirHandle === 'string'
+                    ? memoryDirHandle + '/memory/' + entry.name + '/' + subEntry.name
+                    : 'memory/' + entry.name + '/' + subEntry.name;
+                  var subDirHandle = typeof memoryDirHandle === 'string'
+                    ? memoryDirHandle + '/memory/' + entry.name
+                    : 'memory/' + entry.name;
+
+                  memoryData.memoryDirs[entry.name].push({
+                    name: subEntry.name,
+                    content: subContent,
+                    fileHandle: subFileHandle,
+                    dirHandle: subDirHandle,
+                    parsed: parseMemoryMarkdown(subContent)
+                  });
+                } catch (e) { /* skip */ }
+              }
             }
-          }
+          } catch (e) { /* skip subdirectory */ }
         }
       }
-    } catch (e) { /* no memory/ */ }
+    } catch (e) { /* no memory/ directory */ }
 
     var hasAny = memoryData.claudeMd || memoryData.memoryFiles.length > 0 || Object.keys(memoryData.memoryDirs).length > 0;
 
@@ -1372,48 +1402,68 @@ window.ProductivityView = (function () {
 
   /* ══════════════════════════════════════════════════════════
      MEMORY — Watching
+     Uses ForgeFS abstraction for dual-mode (browser/Tauri) support
      ══════════════════════════════════════════════════════════ */
   async function buildMemoryTimestampMap() {
     var map = {};
-    if (memoryData.claudeMd && memoryData.claudeMd.fileHandle) {
+
+    if (memoryData.claudeMd) {
       try {
-        var f = await memoryData.claudeMd.fileHandle.getFile();
-        map['CLAUDE.md'] = f.lastModified;
+        var meta = await ForgeFS.getFileMeta(memoryDirHandle, 'CLAUDE.md');
+        map['CLAUDE.md'] = meta.modified;
       } catch (e) { /* skip */ }
     }
+
     for (var i = 0; i < memoryData.memoryFiles.length; i++) {
       var mf = memoryData.memoryFiles[i];
       try {
-        var f2 = await mf.fileHandle.getFile();
-        map['memory/' + mf.name] = f2.lastModified;
+        var meta2 = await ForgeFS.getFileMeta(memoryDirHandle, 'memory/' + mf.name);
+        map['memory/' + mf.name] = meta2.modified;
       } catch (e) { /* skip */ }
     }
+
     for (var dirName in memoryData.memoryDirs) {
       var files = memoryData.memoryDirs[dirName];
       for (var j = 0; j < files.length; j++) {
         try {
-          var f3 = await files[j].fileHandle.getFile();
-          map['memory/' + dirName + '/' + files[j].name] = f3.lastModified;
+          var meta3 = await ForgeFS.getFileMeta(memoryDirHandle, 'memory/' + dirName + '/' + files[j].name);
+          map['memory/' + dirName + '/' + files[j].name] = meta3.modified;
         } catch (e) { /* skip */ }
       }
     }
+
     return map;
   }
 
   async function countMemoryFiles() {
     var count = 0;
+
+    /* Count files in memory/ */
     try {
-      var memDir = await memoryDirHandle.getDirectoryHandle('memory');
-      for await (var entry of memDir.values()) {
-        if (entry.kind === 'file' && entry.name.endsWith('.md')) count++;
-        else if (entry.kind === 'directory') {
-          for await (var sub of entry.values()) {
-            if (sub.kind === 'file' && sub.name.endsWith('.md')) count++;
-          }
+      var entries = await ForgeFS.readDir(memoryDirHandle, 'memory');
+      for (var i = 0; i < entries.length; i++) {
+        var entry = entries[i];
+        if (entry.kind === 'file' && entry.name.endsWith('.md')) {
+          count++;
+        } else if (entry.kind === 'directory') {
+          try {
+            var subEntries = await ForgeFS.readDir(memoryDirHandle, 'memory/' + entry.name);
+            for (var j = 0; j < subEntries.length; j++) {
+              if (subEntries[j].kind === 'file' && subEntries[j].name.endsWith('.md')) {
+                count++;
+              }
+            }
+          } catch (e) { /* skip */ }
         }
       }
-    } catch (e) { /* skip */ }
-    try { await memoryDirHandle.getFileHandle('CLAUDE.md'); count++; } catch (e) { /* skip */ }
+    } catch (e) { /* no memory/ directory */ }
+
+    /* Check for CLAUDE.md */
+    try {
+      await ForgeFS.readFile(memoryDirHandle, 'CLAUDE.md');
+      count++;
+    } catch (e) { /* no CLAUDE.md */ }
+
     return count;
   }
 
@@ -1868,16 +1918,25 @@ window.ProductivityView = (function () {
         if (!newName) { showStatus('Please enter a filename'); return; }
         if (!newName.endsWith('.md')) newName += '.md';
 
-        var memDir = await memoryDirHandle.getDirectoryHandle('memory');
-        var subDir = await memDir.getDirectoryHandle(dName, { create: true });
-        var fh = await subDir.getFileHandle(newName, { create: true });
-        await ForgeUtils.FS.writeFile(fh, content);
+        // Ensure directory exists
+        await ForgeFS.createDirectory(memoryDirHandle, 'memory/' + dName);
+
+        // Write the file
+        var filePath = 'memory/' + dName + '/' + newName;
+        await ForgeFS.writeFile(memoryDirHandle, filePath, content);
+
+        var fileHandle = typeof memoryDirHandle === 'string'
+          ? memoryDirHandle + '/' + filePath
+          : filePath;
+        var dirHandle = typeof memoryDirHandle === 'string'
+          ? memoryDirHandle + '/memory/' + dName
+          : 'memory/' + dName;
 
         memoryData.memoryDirs[dName].push({
           name: newName,
           content: content,
-          fileHandle: fh,
-          dirHandle: subDir,
+          fileHandle: fileHandle,
+          dirHandle: dirHandle,
           parsed: parseMemoryMarkdown(content)
         });
         showStatus('Created ' + newName);
@@ -1895,9 +1954,8 @@ window.ProductivityView = (function () {
   async function deleteMemoryFile(dirName, fileName, fromModal) {
     if (!confirm('Delete "' + getDisplayName(fileName) + '"?')) return;
     try {
-      var memDir = await memoryDirHandle.getDirectoryHandle('memory');
-      var subDir = await memDir.getDirectoryHandle(dirName);
-      await subDir.removeEntry(fileName);
+      // Delete the file using ForgeFS
+      await ForgeFS.deleteFile(memoryDirHandle, 'memory/' + dirName + '/' + fileName);
 
       var files = memoryData.memoryDirs[dirName];
       var idx = files ? files.findIndex(function (f) { return f.name === fileName; }) : -1;
@@ -1948,15 +2006,18 @@ window.ProductivityView = (function () {
 
     /* Try loading TASKS.md from root */
     try {
-      var tasksHandle = await rootHandle.getFileHandle('TASKS.md', { create: false });
-      taskFileHandle = tasksHandle;
-      var file = await tasksHandle.getFile();
-      var content = await file.text();
-      lastModified = file.lastModified;
+      var content = await ForgeFS.readFile(rootHandle, 'TASKS.md');
+      var meta = await ForgeFS.getFileMeta(rootHandle, 'TASKS.md');
+
+      taskFileHandle = typeof rootHandle === 'string'
+        ? rootHandle + '/TASKS.md'
+        : 'TASKS.md';
+      lastModified = meta.modified;
+
       var result = parseTaskMarkdown(content);
       sections = result.sections;
       tasks = result.tasks;
-      taskFileName = file.name;
+      taskFileName = 'TASKS.md';
       updateFolderBadge();
       renderTasks();
       startTaskWatching();

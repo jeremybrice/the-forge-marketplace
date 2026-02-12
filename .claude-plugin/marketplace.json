@@ -24,11 +24,6 @@
       "description": "Local-first product management commands for structured card generation. Automates Initiative, Epic, and Story card creation with local markdown file persistence."
     },
     {
-      "name": "forge-shell",
-      "source": "./forge-shell",
-      "description": "Unified single-page application with built-in view controllers for browsing plugin views (Cognitive Forge, Product Forge, Productivity, Rovo Agent Forge, Roadmap). No iframes."
-    },
-    {
       "name": "rovo-agent-forge",
       "source": "./rovo-agent-forge",
       "description": "Interactive builders for Atlassian Rovo agents. Guides through Jira and Confluence agent configuration via adaptive interview and outputs copy-ready sections for Rovo Studio."

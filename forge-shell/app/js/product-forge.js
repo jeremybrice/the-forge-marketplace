@@ -795,7 +795,13 @@
     },
 
     _renderLayout(view, rootHandle) {
-      var dirName = rootHandle ? rootHandle.name : '';
+      // Handle both FileSystemDirectoryHandle (browser) and path string (Tauri)
+      var dirName = '';
+      if (rootHandle) {
+        dirName = typeof rootHandle === 'string'
+          ? rootHandle.split('/').pop() || rootHandle.split('\\').pop() || rootHandle
+          : rootHandle.name;
+      }
 
       view.innerHTML =
         /* Toolbar */

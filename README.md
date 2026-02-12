@@ -53,23 +53,29 @@ Interactive builders for Atlassian Rovo agents. Guides through Jira and Confluen
 
 ### Forge Shell v1.0.0
 
-Unified single-page application with built-in view controllers for browsing plugin views (Cognitive Forge, Product Forge, Productivity, Rovo Agent Forge, Roadmap). Acts as the single entry point for all visual plugin interfaces with no iframes.
+**Desktop visualization app** for browsing project data created by Forge Marketplace plugins. Provides a unified single-page application with built-in view controllers for all plugin views (Cognitive Forge, Product Forge, Productivity, Rovo Agent Forge, Roadmap). No iframes.
 
-**Commands:**
-- `/forge-shell:add` — Register a plugin dashboard in the shell
-- `/forge-shell:open` — Open the unified shell
+> **Note:** Forge Shell is a standalone desktop application built with Tauri, not a Claude Code plugin. Install and run it separately from the CLI plugins.
+
+**Installation:**
+```bash
+cd forge-shell
+npm install
+npm run tauri:dev  # Development mode
+npm run tauri:build  # Production build
+```
 
 ## How They Work Together
 
-The five plugins form an integrated workflow:
+The four Claude Code plugins create content, and the Forge Shell desktop app visualizes it:
 
 1. **Productivity** provides the organizational memory layer (products, modules, clients, teams) that Product Forge Local uses for taxonomy validation.
 2. **Cognitive Forge** offers deep reasoning tools for evaluating product concepts, architectural decisions, or strategic directions before they become cards.
 3. **Product Forge Local** turns approved concepts into structured work items (Initiatives, Epics, Stories) with full hierarchy tracking.
 4. **Rovo Agent Forge** builds Atlassian Rovo agent configurations through guided interviews, saving them to `rovo-agents/` in your project root.
-5. **Forge Shell** unifies all plugin views into a single-page application for browsing sessions, cards, tasks, and agent configs without leaving the browser.
+5. **Forge Shell** (desktop app) provides a visual interface for browsing all plugin data in a unified single-page application.
 
-Plugins write to dedicated directories in your project root: `cards/` (Product Forge Local), `sessions/` (Cognitive Forge), and `rovo-agents/` (Rovo Agent Forge).
+Plugins write to dedicated directories in your project root: `cards/` (Product Forge Local), `sessions/` (Cognitive Forge), and `rovo-agents/` (Rovo Agent Forge). The Forge Shell desktop app reads these directories and provides a browsing interface.
 
 ## Installation
 
@@ -104,9 +110,17 @@ Or add it directly to your settings:
 }
 ```
 
-## Setting Up the Unified Shell
+## Setting Up the Desktop Visualization App
 
-After installing plugins, open the unified shell with `/forge-shell:open`. All plugin views (including Cognitive Forge, Product Forge Local, Productivity, and Rovo Agent Forge) are built into the SPA.
+After installing the Claude Code plugins, you can optionally set up the Forge Shell desktop app for visual browsing:
+
+```bash
+cd forge-shell
+npm install
+npm run tauri:dev  # Launch in development mode
+```
+
+All plugin views (Cognitive Forge, Product Forge Local, Productivity, and Rovo Agent Forge) are built into the desktop app. Select your project root directory when prompted to browse all plugin data.
 
 ## Available Plugins
 
@@ -116,7 +130,12 @@ After installing plugins, open the unified shell with `/forge-shell:open`. All p
 | [**Product Forge Local**](./product-forge-local/) | Local-first product management with structured card generation | 1.0.5 | Product Management |
 | [**Productivity**](./productivity/) | Task management, daily planning, and organizational memory | 1.1.0 | Productivity |
 | [**Rovo Agent Forge**](./rovo-agent-forge/) | Atlassian Rovo agent builders with dashboard visualization | 1.0.0 | Agents |
-| [**Forge Shell**](./forge-shell/) | Unified dashboard shell for all plugin interfaces | 1.0.0 | Shell |
+
+## Desktop App
+
+| Tool | Description | Version | Category |
+|------|-------------|---------|----------|
+| [**Forge Shell**](./forge-shell/) | Desktop visualization app for browsing all plugin data (not a CLI plugin) | 1.0.0 | Desktop App |
 
 ## Contributing
 
