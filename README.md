@@ -53,7 +53,7 @@ Interactive builders for Atlassian Rovo agents. Guides through Jira and Confluen
 
 ### Forge Shell v1.0.0
 
-Unified dashboard shell that provides a single-page application for switching between plugin views. Acts as the single entry point for all visual plugin interfaces.
+Unified single-page application with built-in view controllers for browsing plugin views (Cognitive Forge, Product Forge, Productivity, Rovo Agent Forge, Roadmap). Acts as the single entry point for all visual plugin interfaces with no iframes.
 
 **Commands:**
 - `/forge-shell:add` — Register a plugin dashboard in the shell

@@ -13,7 +13,7 @@ the-forge-marketplace/
   productivity/               ← v1.1.0 — Tasks, planning, organizational memory
   rovo-agent-forge/           ← v1.0.0 — Atlassian Rovo agent builders
   forge-shell/                ← v1.0.0 — Unified dashboard shell
-  STYLE_GUIDE.md              ← Shared dashboard UI standards
+    STYLE_GUIDE.md            ← Shared dashboard UI standards
   README.md
 ```
 
@@ -25,7 +25,6 @@ Every plugin follows this standard layout:
 {plugin}/
   .claude-plugin/
     plugin.json               ← Plugin manifest (name, version, description, author)
-  dashboard.json              ← Dashboard registration (path, label, icon)
   commands/                   ← User-invocable slash commands (one .md per command)
   skills/                     ← Internal knowledge skills (each in its own folder)
     {skill-name}/
@@ -39,7 +38,7 @@ Every plugin follows this standard layout:
 
 Not every plugin has every directory. Cognitive Forge has `agents/` and `sessions/`. Product Forge Local and Productivity have `skills/` with multiple skill folders. Forge Shell has only `commands/`. Rovo Agent Forge has `skills/` and `sample-configs/`.
 
-> **Note:** The `dashboard.json` files are legacy artifacts from the original iframe-based shell. The Forge Shell SPA no longer reads them. New plugins register via the `PLUGINS` array in `forge-shell/app/js/shell.js` and provide a view controller in `forge-shell/app/js/`.
+> **Note:** The `dashboard.json` files were removed in the Feb 2026 cleanup. The Forge Shell SPA uses a hardcoded `PLUGINS` array in `forge-shell/app/js/shell.js` and provides built-in view controllers in `forge-shell/app/js/` for each plugin.
 
 ## Naming Conventions
 
@@ -81,8 +80,7 @@ Not every plugin has every directory. Cognitive Forge has `agents/` and `session
 |------|---------|
 | `.claude-plugin/marketplace.json` | Root catalog listing all plugins |
 | `{plugin}/.claude-plugin/plugin.json` | Plugin manifest (name, version, description, author) |
-| `{plugin}/dashboard.json` | **Legacy artifact.** Was used for iframe-based dashboard registration. The SPA now uses the hardcoded `PLUGINS` array in `forge-shell/app/js/shell.js` and view controllers in `forge-shell/app/js/` |
-| `STYLE_GUIDE.md` | Shared toolbar and theming standards for all dashboards |
+| `forge-shell/STYLE_GUIDE.md` | Shared toolbar and theming standards for all dashboards |
 
 ## File Format Patterns
 
@@ -213,14 +211,14 @@ The `rovo-agents/` directory lives at the user's project root, not inside the pl
 
 ## Dashboard / UI Standards
 
-See `STYLE_GUIDE.md` for the full specification. Key facts:
+See `forge-shell/STYLE_GUIDE.md` for the full specification. Key facts:
 
 - Toolbar height: 48px
 - Icon button size: 32x32px
 - Icon library: Font Awesome (loaded via CDN)
 - Theming: dark/light mode via CSS custom properties (`--bg-primary`, `--text-primary`, `--accent`, etc.) toggled by postMessage or button
 - All plugins share the same CSS custom property names
-- Reference implementation: `cognitive-forge/dashboard.html`
+- Reference implementation: Cognitive Forge SPA view controller in `forge-shell/app/js/`
 
 ## Checklists
 
@@ -232,7 +230,7 @@ See `STYLE_GUIDE.md` for the full specification. Key facts:
 4. If the plugin has a dashboard view, add it to the `PLUGINS` array in `forge-shell/app/js/shell.js` and create a view controller in `forge-shell/app/js/`
 5. Add the plugin entry to `.claude-plugin/marketplace.json` in the `plugins` array
 6. Add the plugin to the table and descriptions in `README.md`
-7. If the plugin has a dashboard, add it to the Implemented Plugins table in `STYLE_GUIDE.md`
+7. If the plugin has a dashboard, add it to the Implemented Plugins table in `forge-shell/STYLE_GUIDE.md`
 
 ### Adding a New Command
 

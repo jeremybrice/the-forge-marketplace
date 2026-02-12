@@ -1,7 +1,7 @@
 {
   "name": "forge-shell",
   "version": "1.0.0",
-  "description": "Unified shell that provides a navbar-driven index page for switching between plugin dashboards via iframes.",
+  "description": "Unified single-page application with built-in view controllers for browsing plugin views. No iframes.",
   "author": {
     "name": "Jeremy Brice"
   },

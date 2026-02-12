@@ -26,7 +26,7 @@
     {
       "name": "forge-shell",
       "source": "./forge-shell",
-      "description": "Unified shell that provides a navbar-driven index page for switching between plugin dashboards via iframes."
+      "description": "Unified single-page application with built-in view controllers for browsing plugin views (Cognitive Forge, Product Forge, Productivity, Rovo Agent Forge, Roadmap). No iframes."
     },
     {
       "name": "rovo-agent-forge",

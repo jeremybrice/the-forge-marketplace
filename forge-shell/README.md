@@ -1,62 +1,138 @@
 # Forge Shell
 
-Unified shell plugin that provides a navbar-driven index page for switching between plugin dashboards using iframes.
+Unified single-page application (SPA) that provides a navbar-driven interface for browsing all plugin views with built-in view controllers. No iframes.
 
 ## Commands
 
-- `/shell:add <plugin-name>` — Register a plugin in the shell sidebar. Copies the plugin's dashboard HTML into `src/` alongside `shell.html` and `shell-registry.json`.
-- `/shell:remove <plugin-name>` — Remove a plugin from the shell sidebar and delete its copied dashboard file.
-- `/shell:open` — Open `src/shell.html` in the browser.
+- `/forge-shell:open` or `/shell:open` — Opens the Forge Shell SPA in your default browser (launches forge-shell/app/index.html)
+- `/shell:add <plugin-name>` — All plugins are built into Forge Shell and enabled by default. This command explains how to toggle visibility using edit mode (click the pencil icon in the sidebar)
+- `/shell:remove <plugin-name>` — Plugins cannot be removed but can be hidden from the sidebar. This command explains how to hide plugins using edit mode
 
 ## Key Files
 
-- `shell.html` — The unified shell page with sidebar nav and iframe content area. Supports dual-mode loading: auto-fetches the registry over HTTP when served, or uses the File System Access API when opened via `file://`.
+- `app/index.html` — The SPA entry point with all plugin view containers pre-rendered
+- `app/js/shell.js` — Core shell logic with hardcoded PLUGINS array and navigation
+- `app/js/{plugin}.js` — View controllers for each plugin (cognitive-forge.js, product-forge.js, etc.)
+- `app/css/` — Shared styling and plugin-specific CSS
 
 ## Architecture
 
-- **Copy-to-src model** — `/shell:add` copies `shell.html` and each plugin's dashboard HTML into a `src/` folder in the user's project. All dashboards become siblings, and `dashboardUrl` values are simple filenames (e.g., `"cognitive-viewer.html"`). This makes the UI self-contained and portable.
-- **Dual-mode loading** — When served over HTTP (e.g., `python3 -m http.server` in `src/`), the shell auto-fetches `shell-registry.json` without any directory picker. When opened via `file://`, it falls back to the File System Access API with IndexedDB handle persistence.
-- **IndexedDB persistence** — The selected directory handle is saved in IndexedDB (`ForgeShell` DB) so it persists across `file://` reloads without re-prompting.
-- **iframes** for full isolation — existing plugin dashboards work unmodified inside the shell.
-- **Shell owns the theme** and broadcasts to iframes via `postMessage({ type: 'forge-shell:theme', theme: 'dark' | 'light' })`.
-- Participating plugins listen for the `forge-shell:theme` message and apply the theme via `data-theme` attribute.
-- Hash routing (`shell.html#plugin-name`) preserves the active plugin across page reloads.
+- **Unified SPA** — All plugins embedded in a single HTML document (app/index.html)
+- **Hardcoded PLUGINS array** — Plugin registration happens in shell.js (lines 6-13), not via plugin discovery
+- **View controllers** — Each plugin has a dedicated JavaScript module that implements `init(rootHandle)` and `destroy()` methods
+- **Hash-based routing** — Uses URL hash (#plugin-id) for navigation without page reloads
+- **File System Access API** — Users select their project root directory once; handle persisted in IndexedDB
+- **Pre-rendered view containers** — Each plugin has a `<div id="view-{plugin-id}">` container; only one visible at a time
+- **Shared theming** — Dark/light mode via CSS custom properties; theme toggle updates all views
 
-## Target Structure
+## Plugin Registration
 
-After running `/shell:add` for each plugin, the user's project contains:
+All plugins are registered in the PLUGINS array in `app/js/shell.js`:
 
-```
-my-project/
-└── src/
-    ├── shell.html
-    ├── shell-registry.json
-    ├── cognitive-viewer.html
-    ├── product-viewer.html
-    └── memory-viewer.html
-```
-
-## Registry Format
-
-The `src/shell-registry.json` file is created in the user's `src/` folder by `/shell:add`:
-
-```json
-{
-  "plugins": [
-    {
-      "name": "productivity",
-      "label": "Productivity",
-      "icon": "<i class=\"fa-solid fa-brain\"></i>",
-      "dashboardUrl": "memory-viewer.html"
-    }
-  ]
-}
+```javascript
+const PLUGINS = [
+  { id: 'forge-shell',         label: 'Forge Shell',     icon: 'fa-solid fa-terminal',       requiredDir: null },
+  { id: 'cognitive-forge',     label: 'Cognitive Forge',  icon: 'fa-solid fa-brain',          requiredDir: 'sessions' },
+  { id: 'product-forge-local', label: 'Product Forge',    icon: 'fa-solid fa-clipboard-list', requiredDir: 'cards' },
+  { id: 'roadmap',             label: 'Roadmap',          icon: 'fa-solid fa-road',           requiredDir: 'cards' },
+  { id: 'productivity',        label: 'Productivity',     icon: 'fa-solid fa-list-check',     requiredDir: null },
+  { id: 'rovo-agent-forge',    label: 'Rovo Agent Forge', icon: 'fa-solid fa-robot',          requiredDir: 'rovo-agents' },
+];
 ```
 
-## Theme Protocol
+Each plugin specifies:
 
-The shell broadcasts theme changes to all iframes:
-```js
-postMessage({ type: 'forge-shell:theme', theme: 'dark' | 'light' })
+- `id`: unique identifier used in routing
+- `label`: displayed in sidebar navigation
+- `icon`: Font Awesome class for sidebar icon
+- `requiredDir`: which directory must exist for the plugin to be "active" (null = always available)
+
+## View Controller Pattern
+
+Each plugin implements a view controller that:
+
+1. Defines `init(rootHandle)` to render UI when the plugin is activated
+2. Optionally defines `destroy()` for cleanup when switching away
+3. Registers itself via `Shell.registerController(pluginId, controller)`
+4. Scopes all DOM queries to its view container (#view-{plugin-id})
+
+Example structure from `cognitive-forge.js`:
+
+```javascript
+window.CognitiveForgeView = (function () {
+  'use strict';
+
+  let rootHandle = null;
+  let initialized = false;
+
+  // Scoped query helper
+  function $(sel) {
+    return document.querySelector('#view-cognitive-forge ' + sel);
+  }
+
+  function init(handle) {
+    rootHandle = handle;
+    // Render UI inside #view-cognitive-forge container
+    scaffold();
+    loadSessions();
+    initialized = true;
+  }
+
+  function destroy() {
+    // Cleanup timers, event listeners, etc.
+    initialized = false;
+  }
+
+  return { init, destroy };
+})();
+
+Shell.registerController('cognitive-forge', window.CognitiveForgeView);
 ```
-Each participating dashboard listens for this message and applies the theme using the `data-theme` attribute on `document.documentElement`, which matches their existing CSS variable system.
+
+## Directory Structure
+
+```
+forge-shell/
+├── app/
+│   ├── index.html              # SPA entry point
+│   ├── css/
+│   │   ├── theme.css           # CSS custom properties for theming
+│   │   ├── shell.css           # Core shell layout
+│   │   ├── components.css      # Shared components
+│   │   └── {plugin}.css        # Plugin-specific styles
+│   └── js/
+│       ├── utils.js            # Shared utilities (FS API, YAML, theme, toast)
+│       ├── card-data.js        # Shared card parsing
+│       ├── shell.js            # Shell core + ForgeShellView controller
+│       ├── cognitive-forge.js  # CognitiveForgeView controller
+│       ├── product-forge.js    # ProductForgeLocalView controller
+│       ├── productivity.js     # ProductivityView controller
+│       ├── roadmap.js          # RoadmapView controller
+│       └── rovo-agent-forge.js # RovoAgentForgeView controller
+├── commands/
+│   ├── open.md
+│   ├── add.md
+│   └── remove.md
+└── .claude-plugin/
+    └── plugin.json
+```
+
+## Usage
+
+1. Run `/forge-shell:open` to launch the SPA in your browser
+2. Select your project root directory when prompted
+3. Use the sidebar to navigate between plugin views
+4. Toggle dark/light theme with the moon/sun icon
+5. Use "Change Directory" to switch to a different project
+
+The directory handle is persisted in IndexedDB, so you won't need to reselect it on subsequent visits.
+
+## Edit Mode
+
+Click the pencil icon at the bottom of the sidebar to enter edit mode. In edit mode, you can:
+
+- Toggle plugin visibility using the eye icons next to each plugin
+- Hidden plugins are remembered across sessions
+- Exit edit mode by clicking the checkmark icon
+
+Plugins cannot be removed from the SPA (they are hardcoded), but they can be hidden from the sidebar when not needed.

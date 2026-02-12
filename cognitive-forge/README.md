@@ -134,7 +134,7 @@ cognitive-forge/
 
 The Cognitive Forge dashboard (`dashboard.html`) is a single-file HTML viewer for browsing saved debate and exploration sessions. It uses the File System Access API to read from the `sessions/` directory.
 
-Register in Forge Shell via: `/shell:add cognitive-forge`
+View sessions in the built-in Forge Shell dashboard. Run `/forge-shell:open` to launch.
 
 ## Architecture
 
