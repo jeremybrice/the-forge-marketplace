@@ -59,7 +59,10 @@ client: ""                       # From memory/context/clients.md
 team: ""
 confidence: Medium               # High | Medium | Low
 estimate_hours: null
-jira_card: null
+jira_card: null                  # Jira issue key (e.g., "PROJ-123") - legacy field, use jira_key for new integrations
+jira_url: null                   # Full URL to Jira issue
+jira_last_synced: null           # ISO 8601 timestamp of last sync
+jira_status: null                # Last known Jira status
 source_intake: null              # filename of originating intake (without .md)
 children:                        # filenames of child Epics (without .md)
   - epic-filename-here
@@ -84,6 +87,10 @@ team: ""
 parent: initiative-filename      # filename of parent Initiative (without .md)
 children:                        # filenames of child Stories (without .md)
   - story-001-slug
+jira_key: null                   # Jira issue key (e.g., "PROJ-123")
+jira_url: null                   # Full URL to Jira issue
+jira_last_synced: null           # ISO 8601 timestamp of last sync
+jira_status: null                # Last known Jira status
 description: "Brief summary"
 source_intake: null
 source_conversation: null
@@ -105,7 +112,10 @@ client: ""                       # From memory/context/clients.md
 team: ""
 parent: epic-filename            # filename of parent Epic (without .md)
 story_points: null
-jira_card: null
+jira_card: null                  # Jira issue key (e.g., "PROJ-123") - legacy field, use jira_key for new integrations
+jira_url: null                   # Full URL to Jira issue
+jira_last_synced: null           # ISO 8601 timestamp of last sync
+jira_status: null                # Last known Jira status
 source_conversation: null
 created: 2026-02-08
 updated: 2026-02-08
