@@ -341,7 +341,7 @@ When a command or schema needs product, module, client, or system values:
 ### Missing Config
 If memory/context files don't exist:
 1. Accept freeform values (don't reject)
-2. Inform user: "Run `/productivity:setup-org` to configure your taxonomy"
+2. Inform user: "Run `/memory:setup-org` to configure your taxonomy"
 3. After workflow, offer to add used values to memory
 
 ### Unknown Values

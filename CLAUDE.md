@@ -10,7 +10,8 @@ the-forge-marketplace/
     marketplace.json          ← Root plugin catalog
   cognitive-forge/            ← v1.2.0 — Multi-agent debate & exploration
   product-forge-local/        ← v1.0.5 — Local-first product card management
-  productivity/               ← v1.1.0 — Tasks, planning, organizational memory
+  tasks/                      ← v1.0.0 — Folder-based task management
+  memory/                     ← v1.0.0 — Organizational memory and context
   rovo-agent-forge/           ← v1.0.0 — Atlassian Rovo agent builders
   forge-shell/                ← v1.0.0 — Desktop visualization app (not a plugin)
     STYLE_GUIDE.md            ← Shared dashboard UI standards
@@ -36,7 +37,7 @@ Every plugin follows this standard layout:
   hooks/                      ← Optional: hook definitions
 ```
 
-Not every plugin has every directory. Cognitive Forge has `agents/` and `sessions/`. Product Forge Local and Productivity have `skills/` with multiple skill folders. Rovo Agent Forge has `skills/` and `sample-configs/`. **Forge Shell is not a plugin** and does not follow this pattern; it's a desktop app with a different structure.
+Not every plugin has every directory. Cognitive Forge has `agents/` and `sessions/`. Product Forge Local, Tasks, and Memory have `skills/` with multiple skill folders. Rovo Agent Forge has `skills/` and `sample-configs/`. **Forge Shell is not a plugin** and does not follow this pattern; it's a desktop app with a different structure.
 
 > **Note:** The `dashboard.json` files were removed in the Feb 2026 cleanup. The Forge Shell desktop app uses a hardcoded `PLUGINS` array in `forge-shell/app/js/shell.js` and provides built-in view controllers in `forge-shell/app/js/` for each plugin. Forge Shell is no longer registered as a Claude Code plugin and has no `.claude-plugin/` or `commands/` folders.
 
@@ -177,10 +178,16 @@ The `rovo-agents/` directory lives at the user's project root, not inside the pl
 
 ```
 ┌─────────────┐     taxonomy      ┌─────────────────────┐
-│ Productivity │ ──────────────► │ Product Forge Local  │
+│   Memory     │ ──────────────► │ Product Forge Local  │
 │  (memory/    │  products,       │  (cards/, skills,    │
 │   context/)  │  modules,        │   commands)          │
 └─────────────┘  clients          └─────────────────────┘
+                                           │
+┌─────────────┐                            │
+│    Tasks     │   folder-based            │
+│  (tasks/     │   task tracking           │
+│   *.md)      │   with sync               │
+└─────────────┘                            │
                                            │
 ┌─────────────┐                            │
 │  Cognitive   │   independent sessions    │
@@ -203,9 +210,10 @@ The `rovo-agents/` directory lives at the user's project root, not inside the pl
               └────────────────────┘
 ```
 
-- **Productivity** provides the organizational memory layer (`memory/context/` files with products, modules, clients, teams) consumed by Product Forge Local for taxonomy validation.
+- **Memory** provides the organizational memory layer (`memory/context/` files with products, modules, clients, teams) consumed by Product Forge Local for taxonomy validation.
+- **Tasks** manages individual task files in `tasks/` directory with external sync capabilities (Asana, Linear, Jira, GitHub Issues).
 - **Cognitive Forge** operates independently, writing debate and exploration sessions to its own `sessions/` directory.
-- **Product Forge Local** reads taxonomy from Productivity's memory files and writes product cards to the user's project `cards/` directory.
+- **Product Forge Local** reads taxonomy from Memory's context files and writes product cards to the user's project `cards/` directory.
 - **Rovo Agent Forge** provides interactive builders for Atlassian Rovo agents. Saves agent configurations to the user's project `rovo-agents/` directory. Has a dedicated view controller in the Forge Shell desktop app for visualizing and editing agents.
 - **Forge Shell** is a desktop visualization app (not a plugin) with built-in view controllers for each plugin. Plugins are hardcoded in the `PLUGINS` array in `forge-shell/app/js/shell.js`. Users install it separately via `npm run tauri:dev` or desktop installers.
 
@@ -255,7 +263,7 @@ See `forge-shell/STYLE_GUIDE.md` for the full specification. Key facts:
 ## Key Constraints
 
 - **Never silently overwrite card files.** Always present a diff to the user before updating an existing card.
-- **Taxonomy comes from `memory/context/` files.** If these files do not exist, accept freeform values and suggest the user run `/productivity:setup-org` to configure their taxonomy.
+- **Taxonomy comes from `memory/context/` files.** If these files do not exist, accept freeform values and suggest the user run `/memory:setup-org` to configure their taxonomy.
 - **Story numbers are zero-padded 3-digit sequential** (001, 002, ...). Scan `cards/stories/` for the highest existing number and increment by one.
 - **Cards directory lives at the user's project root**, not inside the plugin folder. The path is `cards/{type}s/{filename}.md` relative to the working directory.
 - **Date format is ISO 8601:** `YYYY-MM-DD` for all frontmatter date fields.

@@ -1,30 +1,27 @@
 ---
-description: Initialize the productivity system and open the dashboard
+description: Initialize the organizational memory system and open the dashboard
 ---
 
 # Start Command
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../CONNECTORS.md).
 
-Initialize the task and memory systems, then open the unified dashboard.
+Initialize the organizational memory system with hot cache (CLAUDE.md) and deep memory directory (memory/).
 
 ## Instructions
 
 ### 1. Check What Exists
 
 Check the working directory for:
-- `TASKS.md` — task list
-- `CLAUDE.md` — working memory
+- `CLAUDE.md` — working memory (hot cache)
 - `memory/` — deep memory directory
 - `dashboard.html` — the visual UI
 
 ### 2. Create What's Missing
 
-**If `TASKS.md` doesn't exist:** Create it with the standard template (see task-management skill). Place it in the current working directory.
-
 **If `dashboard.html` doesn't exist:** Copy it from `${CLAUDE_PLUGIN_ROOT}/skills/dashboard.html` to the current working directory.
 
-**If `CLAUDE.md` and `memory/` don't exist:** This is a fresh setup — after opening the dashboard, begin the memory bootstrap workflow (see below). Place these in the current working directory.
+**If `CLAUDE.md` and `memory/` don't exist:** This is a fresh setup — begin the memory bootstrap workflow (see below).
 
 ### 3. Open the Dashboard
 
@@ -34,9 +31,10 @@ Do NOT use `open` or `xdg-open` — in Cowork, the agent runs in a VM and shell 
 
 If everything was already initialized:
 ```
-Dashboard open. Your tasks and memory are both loaded.
-- /productivity:update to sync tasks and check memory
-- /productivity:update --comprehensive for a deep scan of all activity
+Dashboard open. Your organizational memory is loaded.
+- /memory:remember to add new entries
+- /memory:recall to query interactively
+- /memory:setup-org to configure taxonomy (products, modules, clients, teams)
 ```
 
 If memory hasn't been bootstrapped yet, continue to step 5.
@@ -45,12 +43,12 @@ If memory hasn't been bootstrapped yet, continue to step 5.
 
 Only do this if `CLAUDE.md` and `memory/` don't exist yet.
 
-The best source of workplace language is the user's actual task list. Real tasks = real shorthand.
+The best source of workplace language is the user's actual activity. Real work = real shorthand.
 
 **Ask the user:**
 ```
 Where do you keep your todos or task list? This could be:
-- A local file (e.g., TASKS.md, todo.txt)
+- A local file (e.g., TASKS.md, todo.txt, tasks/)
 - An app (e.g. Asana, Linear, Jira, Notion, Todoist)
 - A notes file
 
@@ -141,12 +139,13 @@ From everything gathered, create:
 ### 8. Report Results
 
 ```
-Productivity system ready:
-- Tasks: TASKS.md (X items)
-- Memory: X people, X terms, X projects
+Memory system ready:
+- CLAUDE.md: X people, X terms, X projects
+- Deep memory: X people profiles, X project files
 - Dashboard: open in browser
 
-Use /productivity:update to keep things current (add --comprehensive for a deep scan).
+Use /memory:remember to add new entries, /memory:recall to query.
+Run /memory:setup-org to configure organizational taxonomy.
 ```
 
 ## Notes

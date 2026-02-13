@@ -13,10 +13,14 @@
       "description": "Deep concept evaluation through multi-agent debate (/debate) and interactive guided exploration (/explore). Spawns specialized agents (Challenger, Explorer, Synthesizer) for parallel analysis, or leads iterative dialogue as the Guide with selective agent recruitment."
     },
     {
-      "name": "productivity",
-      "source": "./productivity",
-      "description": "Manage tasks, plan your day, and build up memory of important context about your work. Syncs with your calendar, email, and chat to keep everything organized and on track."
-
+      "name": "tasks",
+      "source": "./tasks",
+      "description": "Task management with folder-based structure. Each task is an individual markdown file with YAML frontmatter. Syncs with external task trackers (Asana, Linear, Jira, GitHub Issues)."
+    },
+    {
+      "name": "memory",
+      "source": "./memory",
+      "description": "Organizational memory and context management. Two-tier system with CLAUDE.md hot cache and memory/ directory for full knowledge base. Decodes shorthand, acronyms, nicknames, and internal language."
     },
     {
       "name": "product-forge-local",

@@ -73,7 +73,7 @@ window.CognitiveForgeView = (function () {
           <button class="btn-icon cf-toolbar-toggle" data-action="toggle-sidebar" title="Toggle sidebar">
             <i class="fa-solid fa-bars"></i>
           </button>
-          <span class="toolbar-title"><i class="fa-solid fa-brain"></i> Cognitive Forge</span>
+          <span class="toolbar-title"><i class="fa-solid fa-scale-balanced"></i> Cognitive Forge</span>
           <div class="folder-path hidden" data-ref="folder-path">
             <i class="fa-solid fa-folder-open"></i>
             <span data-ref="folder-name"></span>

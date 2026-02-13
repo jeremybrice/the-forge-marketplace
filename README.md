@@ -33,15 +33,26 @@ Local-first product management for structured card generation. Automates Initiat
 - `/product-forge-local:checkpoint` — Capture a knowledge checkpoint
 - `/product-forge-local:decision` — Log a decision to the Decision Log
 
-### Productivity v1.1.0
+### Tasks v1.0.0
 
-Task management, daily planning, and organizational memory. Syncs with your calendar, email, and chat to keep everything organized and on track.
+Task management with folder-based structure. Each task is an individual markdown file with YAML frontmatter stored in `tasks/` directory. Syncs with external task trackers (Asana, Linear, Jira, GitHub Issues).
 
 **Commands:**
-- `/productivity:plan-day` — Plan your day with calendar and task integration
-- `/productivity:task` — Create, update, and manage tasks
-- `/productivity:remember` — Store important context in organizational memory
-- `/productivity:setup-org` — Configure organizational taxonomy (products, modules, clients, teams)
+- `/tasks:start` — Initialize tasks system and open dashboard
+- `/tasks:update` — Sync tasks from external sources and triage stale items
+- `/tasks:add` — Quick add a new task
+
+**Migration:** Automatically migrates legacy TASKS.md single-file format to folder-based structure on first run.
+
+### Memory v1.0.0
+
+Organizational memory and context management. Two-tier system with CLAUDE.md hot cache (~50-80 lines) and memory/ directory for full knowledge base. Decodes shorthand, acronyms, nicknames, and internal language so Claude understands requests like a colleague would.
+
+**Commands:**
+- `/memory:start` — Initialize memory system with bootstrap workflow
+- `/memory:setup-org` — Configure organizational taxonomy (products, modules, clients, teams)
+- `/memory:remember` — Store new entries in memory
+- `/memory:recall` — Query memory interactively
 
 ### Rovo Agent Forge v1.0.0
 
@@ -67,15 +78,16 @@ npm run tauri:build  # Production build
 
 ## How They Work Together
 
-The four Claude Code plugins create content, and the Forge Shell desktop app visualizes it:
+The five Claude Code plugins create content, and the Forge Shell desktop app visualizes it:
 
-1. **Productivity** provides the organizational memory layer (products, modules, clients, teams) that Product Forge Local uses for taxonomy validation.
-2. **Cognitive Forge** offers deep reasoning tools for evaluating product concepts, architectural decisions, or strategic directions before they become cards.
-3. **Product Forge Local** turns approved concepts into structured work items (Initiatives, Epics, Stories) with full hierarchy tracking.
-4. **Rovo Agent Forge** builds Atlassian Rovo agent configurations through guided interviews, saving them to `rovo-agents/` in your project root.
-5. **Forge Shell** (desktop app) provides a visual interface for browsing all plugin data in a unified single-page application.
+1. **Memory** provides the organizational memory layer (products, modules, clients, teams) that Product Forge Local uses for taxonomy validation.
+2. **Tasks** manages individual task tracking with external sync capabilities (Asana, Linear, Jira, GitHub Issues).
+3. **Cognitive Forge** offers deep reasoning tools for evaluating product concepts, architectural decisions, or strategic directions before they become cards.
+4. **Product Forge Local** turns approved concepts into structured work items (Initiatives, Epics, Stories) with full hierarchy tracking.
+5. **Rovo Agent Forge** builds Atlassian Rovo agent configurations through guided interviews, saving them to `rovo-agents/` in your project root.
+6. **Forge Shell** (desktop app) provides a visual interface for browsing all plugin data in a unified single-page application.
 
-Plugins write to dedicated directories in your project root: `cards/` (Product Forge Local), `sessions/` (Cognitive Forge), and `rovo-agents/` (Rovo Agent Forge). The Forge Shell desktop app reads these directories and provides a browsing interface.
+Plugins write to dedicated directories in your project root: `cards/` (Product Forge Local), `sessions/` (Cognitive Forge), `tasks/` (Tasks), and `rovo-agents/` (Rovo Agent Forge). The Forge Shell desktop app reads these directories and provides a browsing interface.
 
 ## Installation
 
@@ -120,7 +132,7 @@ npm install
 npm run tauri:dev  # Launch in development mode
 ```
 
-All plugin views (Cognitive Forge, Product Forge Local, Productivity, and Rovo Agent Forge) are built into the desktop app. Select your project root directory when prompted to browse all plugin data.
+All plugin views (Cognitive Forge, Product Forge Local, Tasks, Memory, and Rovo Agent Forge) are built into the desktop app. Select your project root directory when prompted to browse all plugin data.
 
 ## Available Plugins
 
@@ -128,7 +140,8 @@ All plugin views (Cognitive Forge, Product Forge Local, Productivity, and Rovo A
 |--------|-------------|---------|----------|
 | [**Cognitive Forge**](./cognitive-forge/) | Multi-agent concept evaluation through structured debate and interactive exploration | 1.2.0 | Reasoning |
 | [**Product Forge Local**](./product-forge-local/) | Local-first product management with structured card generation | 1.0.5 | Product Management |
-| [**Productivity**](./productivity/) | Task management, daily planning, and organizational memory | 1.1.0 | Productivity |
+| [**Tasks**](./tasks/) | Folder-based task management with external sync capabilities | 1.0.0 | Productivity |
+| [**Memory**](./memory/) | Organizational memory and context management with two-tier system | 1.0.0 | Productivity |
 | [**Rovo Agent Forge**](./rovo-agent-forge/) | Atlassian Rovo agent builders with dashboard visualization | 1.0.0 | Agents |
 
 ## Desktop App

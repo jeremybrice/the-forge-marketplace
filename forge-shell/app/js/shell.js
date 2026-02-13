@@ -4,11 +4,12 @@
    ═══════════════════════════════════════════════════════════════ */
 
 const PLUGINS = [
-  { id: 'forge-shell',         label: 'Forge Shell',     icon: 'fa-solid fa-terminal',       requiredDir: null },
-  { id: 'cognitive-forge',     label: 'Cognitive Forge',  icon: 'fa-solid fa-brain',          requiredDir: 'sessions' },
+  { id: 'forge-shell',         label: 'Forge Shell',      icon: 'fa-solid fa-terminal',       requiredDir: null },
+  { id: 'cognitive-forge',     label: 'Cognitive Forge',  icon: 'fa-solid fa-scale-balanced', requiredDir: 'sessions' },
   { id: 'product-forge-local', label: 'Product Forge',    icon: 'fa-solid fa-clipboard-list', requiredDir: 'cards' },
   { id: 'roadmap',             label: 'Roadmap',          icon: 'fa-solid fa-road',           requiredDir: 'cards' },
-  { id: 'productivity',        label: 'Productivity',     icon: 'fa-solid fa-list-check',     requiredDir: null },
+  { id: 'tasks',               label: 'Tasks',            icon: 'fa-solid fa-list-check',     requiredDir: 'tasks' },
+  { id: 'memory',              label: 'Memory',           icon: 'fa-solid fa-brain',          requiredDir: 'memory' },
   { id: 'rovo-agent-forge',    label: 'Rovo Agent Forge', icon: 'fa-solid fa-robot',          requiredDir: 'rovo-agents' },
 ];
 
