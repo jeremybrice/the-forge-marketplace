@@ -1,0 +1,6 @@
+{
+  "name": "tasks",
+  "version": "1.0.0",
+  "description": "Folder-based task management with rich metadata and external sync",
+  "author": { "name": "Jeremy Brice" }
+}

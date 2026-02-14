@@ -166,32 +166,54 @@ window.CardData = (function () {
 
   /* ═══════════════════════════════════════════════════════════════
      File Scanner — scans cards/ subdirs
+     Uses ForgeFS abstraction for dual-mode (browser/Tauri) support
      ═══════════════════════════════════════════════════════════════ */
   async function scanCardsDir(cardsHandle) {
     const files = new Map();
     if (!cardsHandle) return files;
+
     try {
-      for await (const entry of cardsHandle.values()) {
+      // List directories in cards/ folder
+      const entries = await ForgeFS.readDir(cardsHandle, '');
+
+      for (const entry of entries) {
         if (entry.kind !== 'directory') continue;
         if (!EXPECTED_DIRS.includes(entry.name)) continue;
+
         try {
-          for await (const fileEntry of entry.values()) {
+          // List .md files in this subdirectory
+          const subEntries = await ForgeFS.readDir(cardsHandle, entry.name);
+
+          for (const fileEntry of subEntries) {
             if (fileEntry.kind !== 'file' || !fileEntry.name.endsWith('.md')) continue;
+
             const filename = fileEntry.name.replace(/\.md$/, '');
             try {
-              const file = await fileEntry.getFile();
+              // Read file content using ForgeFS
+              const content = await ForgeFS.readFile(cardsHandle, `${entry.name}/${fileEntry.name}`);
+              const meta = await ForgeFS.getFileMeta(cardsHandle, `${entry.name}/${fileEntry.name}`);
+
               files.set(filename, {
-                handle: fileEntry,
+                handle: typeof cardsHandle === 'string'
+                  ? `${cardsHandle}/${entry.name}/${fileEntry.name}`
+                  : fileEntry,
                 dirName: entry.name,
                 fileName: fileEntry.name,
-                lastModified: file.lastModified,
-                content: await file.text()
+                lastModified: meta.modified,
+                content: content
               });
-            } catch (e) { console.warn('Failed to read ' + fileEntry.name + ':', e); }
+            } catch (e) {
+              console.warn('Failed to read ' + fileEntry.name + ':', e);
+            }
           }
-        } catch (e) { console.warn('Failed to scan ' + entry.name + ':', e); }
+        } catch (e) {
+          console.warn('Failed to scan ' + entry.name + ':', e);
+        }
       }
-    } catch (e) { console.error('Failed to scan cards directory:', e); }
+    } catch (e) {
+      console.error('Failed to scan cards directory:', e);
+    }
+
     return files;
   }
 

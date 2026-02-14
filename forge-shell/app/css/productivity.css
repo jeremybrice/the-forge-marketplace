@@ -136,11 +136,20 @@
   display: block;
 }
 
-.prod-task-card .prod-delete-btn {
+.prod-card-actions {
   display: none;
   position: absolute;
   top: 8px;
   right: 8px;
+  gap: 4px;
+}
+
+.prod-task-card:hover .prod-card-actions {
+  display: flex;
+}
+
+.prod-task-card .prod-edit-btn,
+.prod-task-card .prod-delete-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -151,13 +160,14 @@
   border-radius: var(--radius-sm);
 }
 
-.prod-task-card:hover .prod-delete-btn {
-  display: block;
+.prod-task-card .prod-edit-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--accent);
 }
 
 .prod-task-card .prod-delete-btn:hover {
   background: var(--bg-secondary);
-  color: var(--accent);
+  color: #e74c3c;
 }
 
 .prod-card-title {
@@ -1029,6 +1039,266 @@
   gap: 10px;
 }
 
+/* ── Settings Modal ── */
+.task-settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+.task-settings-modal {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.task-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.task-settings-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.task-settings-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.task-settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-settings-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.task-settings-field:hover {
+  background: var(--bg-secondary);
+}
+
+.task-settings-field input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.task-settings-field span {
+  font-size: 14px;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.task-settings-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* ── Edit Modal ── */
+.task-edit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+.task-edit-modal {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 90%;
+  max-width: 800px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.task-edit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.task-edit-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.task-edit-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.task-edit-body .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.task-edit-body .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.task-edit-body .form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.task-edit-body .form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.task-edit-body .form-group input,
+.task-edit-body .form-group select,
+.task-edit-body .form-group textarea {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.task-edit-body .form-group textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.task-edit-body .form-group input:focus,
+.task-edit-body .form-group select:focus,
+.task-edit-body .form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.task-edit-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ── Diff Display ── */
+[data-task-diff-container] {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+[data-task-diff-container].hidden {
+  display: none;
+}
+
+.diff-section {
+  margin-bottom: 20px;
+}
+
+.diff-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.diff-field {
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.diff-field strong {
+  color: var(--text-primary);
+  margin-right: 8px;
+}
+
+.diff-old {
+  color: #e74c3c;
+  text-decoration: line-through;
+}
+
+.diff-new {
+  color: #27ae60;
+  font-weight: 500;
+}
+
+.diff-body {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+.diff-line {
+  white-space: pre;
+}
+
+.diff-line.added {
+  background: rgba(39, 174, 96, 0.15);
+  color: #27ae60;
+}
+
+.diff-line.removed {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+}
+
+.diff-line.common {
+  color: var(--text-muted);
+}
+
 /* ── Status Bar ── */
 .prod-status-bar {
   position: fixed;
@@ -1086,6 +1356,259 @@
   border-radius: var(--radius-sm);
   font-size: 12px;
   font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+/* ── Priority Pills ── */
+.prod-priority-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.prod-priority-pill.high {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.prod-priority-pill.medium {
+  background: rgba(243, 156, 18, 0.15);
+  color: #f39c12;
+  border: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+.prod-priority-pill.low {
+  background: rgba(52, 152, 219, 0.15);
+  color: #3498db;
+  border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .prod-priority-pill.high {
+  background: rgba(231, 76, 60, 0.2);
+  color: #ff6b6b;
+  border-color: rgba(231, 76, 60, 0.4);
+}
+
+[data-theme="dark"] .prod-priority-pill.medium {
+  background: rgba(243, 156, 18, 0.2);
+  color: #ffa726;
+  border-color: rgba(243, 156, 18, 0.4);
+}
+
+[data-theme="dark"] .prod-priority-pill.low {
+  background: rgba(52, 152, 219, 0.2);
+  color: #64b5f6;
+  border-color: rgba(52, 152, 219, 0.4);
+}
+
+/* ── Tag Pills Display ── */
+.prod-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.prod-tag {
+  display: inline-block;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Tag Input Container with Pills ── */
+.prod-tag-input-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  min-height: 42px;
+  cursor: text;
+  position: relative;
+}
+
+.prod-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--accent);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.prod-tag-pill-remove {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0;
+  width: 14px;
+  height: 14px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.prod-tag-pill-remove:hover {
+  opacity: 0.8;
+}
+
+.prod-tag-input-container input {
+  flex: 1;
+  min-width: 120px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+/* ── Autocomplete Dropdown ── */
+.prod-tag-autocomplete {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: var(--shadow-md);
+}
+
+.prod-tag-autocomplete.hidden {
+  display: none;
+}
+
+.prod-tag-autocomplete-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.prod-tag-autocomplete-item:hover,
+.prod-tag-autocomplete-item.selected {
+  background: var(--bg-secondary);
+}
+
+/* ── Dependency Pills Display ── */
+.prod-dep-input-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  min-height: 42px;
+  cursor: text;
+  position: relative;
+}
+
+.prod-dep-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--accent);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.prod-dep-pill-remove {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0;
+  width: 14px;
+  height: 14px;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prod-dep-pill-remove:hover {
+  opacity: 0.8;
+}
+
+.prod-dep-input-container input {
+  flex: 1;
+  min-width: 120px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.prod-dep-input-container input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── Dependency Autocomplete Dropdown ── */
+.prod-dep-autocomplete {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: var(--shadow-md);
+}
+
+.prod-dep-autocomplete.hidden {
+  display: none;
+}
+
+.prod-dep-autocomplete-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background var(--transition);
+}
+
+.prod-dep-autocomplete-item:hover,
+.prod-dep-autocomplete-item.selected {
+  background: var(--bg-secondary);
+}
+
+.prod-dep-autocomplete-item-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.prod-dep-autocomplete-item-meta {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 /* ── Responsive ── */

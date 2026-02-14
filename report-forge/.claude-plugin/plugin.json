@@ -1,0 +1,8 @@
+{
+  "name": "report-forge",
+  "description": "Agent-based investigation and report generation with local markdown persistence. Creates research reports by orchestrating investigator, analyst, and synthesizer agents to produce structured findings on any topic.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Jeremy Brice"
+  }
+}

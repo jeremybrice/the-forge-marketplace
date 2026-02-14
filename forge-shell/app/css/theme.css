@@ -52,6 +52,18 @@
   --rm-bucket-5: #ec4899;
   --rm-bucket-6: #ef4444;
 
+  /* Report Forge category colors */
+  --rf-cat-architecture: #8b5cf6;
+  --rf-cat-performance: #10b981;
+  --rf-cat-security: #ef4444;
+  --rf-cat-integration: #3b82f6;
+  --rf-cat-feature: #14b8a6;
+  --rf-cat-operations: #f59e0b;
+  --rf-cat-debt: #e67e22;
+  --rf-cat-competitive: #ec4899;
+  --rf-cat-user: #6366f1;
+  --rf-cat-business: #3498db;
+
   /* Product Forge status colors */
   --status-draft: #e67e22;
   --status-blue: #3498db;
@@ -62,22 +74,34 @@
 }
 
 [data-theme="dark"] {
-  --bg-primary: #1e1e2e;
-  --bg-secondary: #252536;
-  --bg-tertiary: #2e2e42;
-  --bg-hover: #33334a;
-  --bg-card: #1e1e2e;
+  --bg-primary: #262625;
+  --bg-secondary: #2e2e2e;
+  --bg-tertiary: #2e2e2e;
+  --bg-hover: #c76140;
+  --bg-card: #201e1d;
   --text-primary: #e0e0e8;
-  --text-secondary: #a0a0b0;
-  --text-muted: #6c6c80;
-  --border-color: #3a3a50;
-  --border-light: #2e2e42;
-  --accent: #6681ff;
-  --accent-hover: #5570ee;
-  --accent-light: #2a2a44;
+  --text-secondary: #b6b5b1;
+  --text-muted: #8a8983;
+  --border-color: #565551;
+  --border-light: #2b2a28;
+  --accent: #c76140;
+  --accent-hover: #c76140;
+  --accent-light: #2e2e2e;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
   --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+
+  /* Report Forge category colors (dark theme) */
+  --rf-cat-architecture: #a78bfa;
+  --rf-cat-performance: #34d399;
+  --rf-cat-security: #f87171;
+  --rf-cat-integration: #60a5fa;
+  --rf-cat-feature: #2dd4bf;
+  --rf-cat-operations: #fbbf24;
+  --rf-cat-debt: #f97316;
+  --rf-cat-competitive: #f472b6;
+  --rf-cat-user: #818cf8;
+  --rf-cat-business: #38bdf8;
 }
 
 /* ═══════════════════════════════════════════════════════════

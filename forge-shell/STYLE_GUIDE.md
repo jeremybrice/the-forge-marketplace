@@ -147,9 +147,9 @@ Plugin-specific toolbar additions (e.g., year navigation, filter badges) should 
 
 | Plugin              | File                                  | Has Sidebar | Has Tab Toggles |
 | ------------------- | ------------------------------------- | ----------- | --------------- |
-| Cognitive Forge     | `cognitive-forge/dashboard.html`      | Yes         | No              |
-| Product Forge Local | `product-forge-local/viewer.html`     | Yes         | No              |
-| Productivity        | `productivity/skills/dashboard.html`  | No          | Yes (Tasks/Memory, Board/List) |
+| Cognitive Forge     | (SPA view in forge-shell)             | Yes         | No              |
+| Product Forge Local | (SPA view in forge-shell)             | Yes         | No              |
+| Productivity        | (SPA view in forge-shell)             | No          | Yes (Tasks/Memory, Board/List) |
 | Roadmap             | (SPA view in forge-shell)             | No          | Yes (Card/Timeline, Quarterly/Monthly) |
 | Rovo Agent Forge    | (SPA view in forge-shell)             | Yes         | No              |
 

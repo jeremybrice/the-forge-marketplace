@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/productivity.css">
   <link rel="stylesheet" href="css/roadmap.css">
   <link rel="stylesheet" href="css/rovo-agent-forge.css">
+  <link rel="stylesheet" href="css/report-forge.css">
 </head>
 <body>
 
@@ -66,14 +67,24 @@
         <!-- Rendered by RoadmapView controller -->
       </div>
 
-      <!-- Productivity View -->
-      <div id="view-productivity" class="shell-view">
-        <!-- Rendered by ProductivityView controller -->
+      <!-- Tasks View -->
+      <div id="view-tasks" class="shell-view">
+        <!-- Rendered by TasksView controller -->
+      </div>
+
+      <!-- Memory View -->
+      <div id="view-memory" class="shell-view">
+        <!-- Rendered by MemoryView controller -->
       </div>
 
       <!-- Rovo Agent Forge View -->
       <div id="view-rovo-agent-forge" class="shell-view">
         <!-- Rendered by RovoAgentForgeView controller -->
+      </div>
+
+      <!-- Report Forge View -->
+      <div id="view-report-forge" class="shell-view">
+        <!-- Rendered by ReportForgeView controller -->
       </div>
 
     </div>
@@ -96,14 +107,17 @@
   <div id="toast-container"></div>
 
   <!-- Scripts -->
+  <script src="js/fs-adapter.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/card-data.js"></script>
   <script src="js/shell.js"></script>
   <script src="js/cognitive-forge.js"></script>
   <script src="js/product-forge.js"></script>
-  <script src="js/productivity.js"></script>
+  <script src="js/tasks.js"></script>
+  <script src="js/memory.js"></script>
   <script src="js/roadmap.js"></script>
   <script src="js/rovo-agent-forge.js"></script>
+  <script src="js/report-forge.js"></script>
 
 </body>
 </html>

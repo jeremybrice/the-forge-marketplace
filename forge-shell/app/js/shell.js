@@ -4,12 +4,14 @@
    ═══════════════════════════════════════════════════════════════ */
 
 const PLUGINS = [
-  { id: 'forge-shell',         label: 'Forge Shell',     icon: 'fa-solid fa-terminal',       requiredDir: null },
-  { id: 'cognitive-forge',     label: 'Cognitive Forge',  icon: 'fa-solid fa-brain',          requiredDir: 'sessions' },
+  { id: 'forge-shell',         label: 'Forge Shell',      icon: 'fa-solid fa-terminal',       requiredDir: null },
+  { id: 'cognitive-forge',     label: 'Cognitive Forge',  icon: 'fa-solid fa-scale-balanced', requiredDir: 'sessions' },
   { id: 'product-forge-local', label: 'Product Forge',    icon: 'fa-solid fa-clipboard-list', requiredDir: 'cards' },
   { id: 'roadmap',             label: 'Roadmap',          icon: 'fa-solid fa-road',           requiredDir: 'cards' },
-  { id: 'productivity',        label: 'Productivity',     icon: 'fa-solid fa-list-check',     requiredDir: null },
+  { id: 'tasks',               label: 'Tasks',            icon: 'fa-solid fa-list-check',     requiredDir: 'tasks' },
+  { id: 'memory',              label: 'Memory',           icon: 'fa-solid fa-brain',          requiredDir: 'memory' },
   { id: 'rovo-agent-forge',    label: 'Rovo Agent Forge', icon: 'fa-solid fa-robot',          requiredDir: 'rovo-agents' },
+  { id: 'report-forge',        label: 'Report Forge',     icon: 'fa-solid fa-file-lines',     requiredDir: 'reports' },
 ];
 
 /* ═══════════════════════════════════════════════════════════════
@@ -22,6 +24,7 @@ const Shell = {
   visibility: {},
   pluginDirStatus: {},
   _controllers: {},
+  _watcherCleanup: null,
 
   /* ── Register a view controller ── */
   registerController(pluginId, controller) {
@@ -180,7 +183,16 @@ const Shell = {
   async selectDirectory() {
     try {
       this.rootHandle = await ForgeUtils.FS.pickDirectory('readwrite');
-      await ForgeUtils.DB.save('rootDir', this.rootHandle);
+
+      // Save based on mode
+      if (ForgeFS.isTauri()) {
+        // In Tauri mode, rootHandle is a path string - save to config
+        await ForgeFS.setProjectPath(this.rootHandle);
+      } else {
+        // In browser mode, rootHandle is a FileSystemDirectoryHandle - save to IndexedDB
+        await ForgeUtils.DB.save('rootDir', this.rootHandle);
+      }
+
       await this._onDirectoryReady();
     } catch (e) {
       if (e.name !== 'AbortError') console.error('Directory selection failed:', e);
@@ -189,18 +201,39 @@ const Shell = {
 
   async _tryRestore() {
     try {
-      const saved = await ForgeUtils.DB.get('rootDir');
-      if (!saved) return false;
-      const granted = await ForgeUtils.FS.requestPermission(saved, 'readwrite');
-      if (!granted) {
-        await ForgeUtils.DB.remove('rootDir');
-        return false;
+      if (ForgeFS.isTauri()) {
+        // Tauri mode: try to restore from config
+        const savedPath = await ForgeFS.getProjectPath();
+        if (!savedPath) return false;
+
+        // Verify the path still exists by trying to read it
+        try {
+          await ForgeFS.readDir(savedPath, '');
+          this.rootHandle = savedPath;
+          return true;
+        } catch {
+          console.log('Saved project path no longer accessible:', savedPath);
+          return false;
+        }
+      } else {
+        // Browser mode: try to restore from IndexedDB
+        const saved = await ForgeUtils.DB.get('rootDir');
+        if (!saved) return false;
+
+        const granted = await ForgeUtils.FS.requestPermission(saved, 'readwrite');
+        if (!granted) {
+          await ForgeUtils.DB.remove('rootDir');
+          return false;
+        }
+
+        this.rootHandle = saved;
+        return true;
       }
-      this.rootHandle = saved;
-      return true;
     } catch (e) {
-      console.log('Could not restore directory handle:', e);
-      await ForgeUtils.DB.remove('rootDir').catch(() => {});
+      console.log('Could not restore directory:', e);
+      if (!ForgeFS.isTauri()) {
+        await ForgeUtils.DB.remove('rootDir').catch(() => {});
+      }
       return false;
     }
   },
@@ -220,6 +253,11 @@ const Shell = {
     const memoryDir = await ForgeUtils.FS.getSubDir(this.rootHandle, 'memory');
     this.pluginDirStatus['productivity'] = !!(tasksFile || memoryDir);
 
+    // Set up file watcher (Tauri mode only)
+    if (ForgeFS.isTauri() && typeof this.rootHandle === 'string') {
+      await this._setupFileWatcher();
+    }
+
     this.hideWelcome();
     this.renderNav();
 
@@ -231,6 +269,73 @@ const Shell = {
     } else {
       const first = PLUGINS.find(p => this.visibility[p.id]);
       if (first) this.selectPlugin(first.id);
+    }
+  },
+
+  /* ── File watcher setup (Tauri only) ── */
+  async _setupFileWatcher() {
+    // Clean up previous watcher if any
+    if (this._watcherCleanup) {
+      this._watcherCleanup();
+      this._watcherCleanup = null;
+    }
+
+    try {
+      this._watcherCleanup = await ForgeFS.watchDirectory(this.rootHandle, (changedPath) => {
+        this._onFileChanged(changedPath);
+      });
+      console.log('[Shell] File watcher active for:', this.rootHandle);
+    } catch (error) {
+      console.error('[Shell] Failed to set up file watcher:', error);
+    }
+  },
+
+  /* ── Handle file change events ── */
+  _onFileChanged(path) {
+    console.log('[Shell] File changed:', path);
+
+    // Determine which plugin should refresh based on the changed path
+    let pluginToRefresh = null;
+
+    if (path.includes('/cards/')) {
+      pluginToRefresh = 'product-forge-local';
+    } else if (path.includes('/sessions/')) {
+      pluginToRefresh = 'cognitive-forge';
+    } else if (path.includes('/rovo-agents/')) {
+      pluginToRefresh = 'rovo-agent-forge';
+    } else if (path.includes('/tasks/') || path.includes('TASKS.md')) {
+      pluginToRefresh = 'tasks';
+    } else if (path.includes('/memory/')) {
+      pluginToRefresh = 'memory';
+    } else if (path.includes('/roadmap-data/')) {
+      pluginToRefresh = 'roadmap';
+    } else if (path.includes('/reports/')) {
+      pluginToRefresh = 'report-forge';
+    }
+
+    // If a relevant plugin is active, refresh it
+    if (pluginToRefresh && pluginToRefresh === this.activePlugin) {
+      const ctrl = this._controllers[pluginToRefresh];
+      if (ctrl && ctrl.refresh) {
+        console.log(`[Shell] Refreshing ${pluginToRefresh} view`);
+        ctrl.refresh();
+      }
+    }
+
+    // Check if plugin is suppressing toasts (internal change)
+    let shouldShowToast = true;
+    if (pluginToRefresh) {
+      const ctrl = this._controllers[pluginToRefresh];
+      if (ctrl && typeof ctrl.isSuppressingToasts === 'function') {
+        shouldShowToast = !ctrl.isSuppressingToasts();
+      }
+    }
+
+    // Show toast notification only if not suppressed
+    if (shouldShowToast) {
+      ForgeUtils.Toast.show(`File updated: ${path.split('/').pop()}`, 'info', 3000);
+    } else {
+      console.log('[Shell] Toast suppressed for internal change');
     }
   },
 
@@ -273,7 +378,17 @@ window.ForgeShellView = {
     const container = document.getElementById('view-forge-shell');
     if (!container) return;
 
-    const dirName = rootHandle ? rootHandle.name : 'No directory selected';
+    // Get directory name (handle.name in browser, path basename in Tauri)
+    let dirName = 'No directory selected';
+    if (rootHandle) {
+      if (typeof rootHandle === 'string') {
+        // Tauri mode: extract basename from path
+        dirName = rootHandle.split('/').pop() || rootHandle.split('\\').pop() || rootHandle;
+      } else {
+        // Browser mode: use handle.name
+        dirName = rootHandle.name;
+      }
+    }
 
     // Build plugin status cards
     let statusCards = '';
